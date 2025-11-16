@@ -57,6 +57,11 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        glow: {
+          cyan: "hsl(var(--glow-cyan))",
+          magenta: "hsl(var(--glow-magenta))",
+          purple: "hsl(var(--glow-purple))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -80,10 +85,20 @@ export default {
             height: "0",
           },
         },
+        "spin-wheel": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(1800deg)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "spin-wheel": "spin-wheel 4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
       },
     },
   },
