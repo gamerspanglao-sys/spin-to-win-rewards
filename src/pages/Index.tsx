@@ -3,6 +3,7 @@ import { PrizeWheel, Prize } from "@/components/PrizeWheel";
 import { Leaderboard, LeaderboardEntry } from "@/components/Leaderboard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Maximize2, Gamepad2 } from "lucide-react";
 
 const PRIZES: Prize[] = [
@@ -22,6 +23,8 @@ const Index = () => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [resultText, setResultText] = useState("Ready — enter name and press SPIN");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showResult, setShowResult] = useState(false);
+  const [currentPrize, setCurrentPrize] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem('gamersLB');
@@ -34,22 +37,27 @@ const Index = () => {
     if (isSpinning) return;
     const name = playerName.trim();
     if (!name) {
-      alert('Enter name');
+      alert('Enter player name');
       return;
     }
     setIsSpinning(true);
-    setResultText('Spinning... good luck!');
+    setShowResult(false);
+    setResultText('Spinning... good luck! 🎮');
   };
 
   const handleLanded = (prize: string) => {
-    setResultText(`${playerName} — ${prize}`);
+    setCurrentPrize(prize);
+    setResultText(`${playerName} won: ${prize}`);
+    setShowResult(true);
     
     const newEntry = { name: playerName, prize };
     const updated = [newEntry, ...leaderboard].slice(0, 10);
     setLeaderboard(updated);
     localStorage.setItem('gamersLB', JSON.stringify(updated));
     
-    setIsSpinning(false);
+    setTimeout(() => {
+      setIsSpinning(false);
+    }, 500);
   };
 
   const handleResetLeaderboard = () => {
@@ -75,35 +83,64 @@ const Index = () => {
   }, [playerName, isSpinning]);
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden p-4">
-      {/* Top Controls */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 flex gap-3 z-30">
-        <Input
-          type="text"
-          placeholder="Enter player name"
-          value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
-          className="w-[320px] h-12 text-center text-lg bg-card border-2 border-border focus:border-primary"
-          autoComplete="off"
-        />
-        <Button
-          onClick={handleSpin}
-          disabled={isSpinning}
-          className="h-12 px-6 text-base font-bold bg-primary text-primary-foreground hover:scale-105 transition-transform glow-cyan disabled:opacity-50"
-        >
-          SPIN
-        </Button>
-        <Button
-          onClick={toggleFullscreen}
-          variant="outline"
-          className="h-12 px-6"
-        >
-          <Maximize2 className="w-5 h-5" />
-        </Button>
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 gap-12 relative">
+      {/* Header */}
+      <div className="text-center space-y-4 animate-fade-in">
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <Gamepad2 className="w-16 h-16 text-primary animate-pulse-glow" />
+          <h1 className="text-6xl font-bold text-primary text-glow">
+            Prize Wheel
+          </h1>
+          <Gamepad2 className="w-16 h-16 text-secondary animate-pulse-glow" />
+        </div>
+        <p className="text-xl text-foreground">
+          Enter your name and spin for amazing rewards!
+        </p>
       </div>
 
-      {/* Leaderboard */}
-      <Leaderboard entries={leaderboard} onReset={handleResetLeaderboard} />
+      {/* Input Card */}
+      <Card className="p-8 bg-card border-2 border-border backdrop-blur-sm animate-scale-in max-w-md w-full">
+        <div className="space-y-6">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-primary text-glow">
+              Player Registration
+            </h2>
+            <p className="text-muted-foreground">
+              Ready to win? Enter your name below!
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <Input
+              type="text"
+              placeholder="Enter your name"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="h-14 text-lg text-center bg-input border-2 border-border focus:border-primary transition-all"
+              autoComplete="off"
+              disabled={isSpinning}
+            />
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSpin}
+                disabled={isSpinning || !playerName.trim()}
+                className="flex-1 h-14 text-lg font-bold bg-primary text-primary-foreground hover:scale-105 transition-transform glow-cyan disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {isSpinning ? "SPINNING..." : "SPIN WHEEL"}
+              </Button>
+              <Button
+                onClick={toggleFullscreen}
+                variant="outline"
+                className="h-14 px-4"
+                title="Fullscreen (F)"
+              >
+                <Maximize2 className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Wheel */}
       <div className="animate-scale-in">
@@ -114,16 +151,43 @@ const Index = () => {
         />
       </div>
 
-      {/* Result Box */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-card/60 backdrop-blur-md border border-border/40 rounded-xl px-8 py-4 z-20">
-        <p className="text-foreground text-xl font-semibold text-center">
+      {/* Result Display */}
+      {showResult && (
+        <Card className="p-6 bg-card border-2 border-primary backdrop-blur-sm animate-scale-in glow-cyan max-w-lg w-full">
+          <div className="text-center space-y-4">
+            <h3 className="text-3xl font-bold text-primary text-glow">
+              🎉 Congratulations! 🎉
+            </h3>
+            <div className="text-2xl font-bold text-secondary text-glow">
+              {currentPrize}
+            </div>
+            <p className="text-foreground">
+              Show this screen to staff to claim your prize!
+            </p>
+          </div>
+        </Card>
+      )}
+
+      {/* Leaderboard */}
+      <div className="fixed left-4 top-20 max-w-[280px] w-full animate-fade-in hidden lg:block">
+        <Leaderboard entries={leaderboard} onReset={handleResetLeaderboard} />
+      </div>
+
+      {/* Mobile Leaderboard */}
+      <div className="lg:hidden w-full max-w-md animate-fade-in">
+        <Leaderboard entries={leaderboard} onReset={handleResetLeaderboard} />
+      </div>
+
+      {/* Status Text */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-card/80 backdrop-blur-md border border-border/50 rounded-xl px-6 py-3 z-20 hidden lg:block">
+        <p className="text-foreground text-lg font-medium">
           {resultText}
         </p>
       </div>
 
-      {/* Small credits */}
-      <div className="fixed right-4 bottom-4 text-xs text-muted-foreground z-20">
-        <p>Gamers Reward Wheel</p>
+      {/* Footer */}
+      <div className="text-center text-muted-foreground text-sm">
+        <p>Video Gaming Bar • Press F for fullscreen</p>
       </div>
     </div>
   );
