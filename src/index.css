@@ -126,4 +126,14 @@ All colors MUST be HSL.
   .text-glow {
     text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
   }
+
+  .bounce {
+    animation: arrowBounce 700ms ease-out;
+  }
+
+  @keyframes arrowBounce {
+    0% { transform: translateY(-50%) translateX(10px); }
+    60% { transform: translateY(-50%) translateX(-6px); }
+    100% { transform: translateY(-50%) translateX(0); }
+  }
 }
