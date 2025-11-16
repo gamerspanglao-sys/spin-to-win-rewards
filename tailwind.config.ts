@@ -57,10 +57,15 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        glow: {
-          cyan: "hsl(var(--glow-cyan))",
-          magenta: "hsl(var(--glow-magenta))",
-          purple: "hsl(var(--glow-purple))",
+        neon: {
+          purple: "hsl(var(--neon-purple))",
+          pink: "hsl(var(--neon-pink))",
+          cyan: "hsl(var(--neon-cyan))",
+          blue: "hsl(var(--neon-blue))",
+          green: "hsl(var(--neon-green))",
+          yellow: "hsl(var(--neon-yellow))",
+          orange: "hsl(var(--neon-orange))",
+          red: "hsl(var(--neon-red))",
         },
       },
       borderRadius: {

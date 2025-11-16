@@ -8,39 +8,44 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 240 10% 8%;
+    --background: 220 25% 8%;
     --foreground: 180 100% 95%;
 
-    --card: 240 8% 12%;
+    --card: 220 20% 12%;
     --card-foreground: 180 100% 95%;
 
-    --popover: 240 8% 12%;
+    --popover: 220 20% 12%;
     --popover-foreground: 180 100% 95%;
 
-    --primary: 180 100% 50%;
-    --primary-foreground: 240 10% 8%;
+    --primary: 280 100% 65%;
+    --primary-foreground: 220 25% 8%;
 
-    --secondary: 320 100% 60%;
-    --secondary-foreground: 240 10% 8%;
+    --secondary: 340 100% 60%;
+    --secondary-foreground: 220 25% 8%;
 
-    --muted: 240 5% 25%;
+    --muted: 220 15% 25%;
     --muted-foreground: 180 20% 70%;
 
-    --accent: 280 100% 65%;
-    --accent-foreground: 240 10% 8%;
+    --accent: 180 100% 50%;
+    --accent-foreground: 220 25% 8%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 240 8% 20%;
-    --input: 240 8% 18%;
-    --ring: 180 100% 50%;
+    --border: 220 20% 20%;
+    --input: 220 15% 18%;
+    --ring: 280 100% 65%;
 
     --radius: 1rem;
     
-    --glow-cyan: 180 100% 50%;
-    --glow-magenta: 320 100% 60%;
-    --glow-purple: 280 100% 65%;
+    --neon-purple: 280 100% 65%;
+    --neon-pink: 340 100% 60%;
+    --neon-cyan: 180 100% 50%;
+    --neon-blue: 220 100% 60%;
+    --neon-green: 140 100% 50%;
+    --neon-yellow: 50 100% 60%;
+    --neon-orange: 25 100% 60%;
+    --neon-red: 0 100% 60%;
 
     --sidebar-background: 0 0% 98%;
 
@@ -105,35 +110,41 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    background: radial-gradient(ellipse at top, hsl(240 8% 15%), hsl(240 10% 8%));
+    background: radial-gradient(ellipse at top, hsl(220 25% 12%), hsl(220 25% 8%));
     min-height: 100vh;
+    overflow: hidden;
   }
 }
 
 @layer utilities {
-  .glow-cyan {
-    box-shadow: 0 0 20px hsl(var(--glow-cyan) / 0.5), 0 0 40px hsl(var(--glow-cyan) / 0.3);
+  .neon-glow-purple {
+    box-shadow: 0 0 20px hsl(var(--neon-purple) / 0.6), 0 0 40px hsl(var(--neon-purple) / 0.4), 0 0 60px hsl(var(--neon-purple) / 0.2);
   }
   
-  .glow-magenta {
-    box-shadow: 0 0 20px hsl(var(--glow-magenta) / 0.5), 0 0 40px hsl(var(--glow-magenta) / 0.3);
+  .neon-glow-pink {
+    box-shadow: 0 0 20px hsl(var(--neon-pink) / 0.6), 0 0 40px hsl(var(--neon-pink) / 0.4), 0 0 60px hsl(var(--neon-pink) / 0.2);
   }
   
-  .glow-purple {
-    box-shadow: 0 0 20px hsl(var(--glow-purple) / 0.5), 0 0 40px hsl(var(--glow-purple) / 0.3);
+  .neon-glow-cyan {
+    box-shadow: 0 0 20px hsl(var(--neon-cyan) / 0.6), 0 0 40px hsl(var(--neon-cyan) / 0.4), 0 0 60px hsl(var(--neon-cyan) / 0.2);
   }
 
-  .text-glow {
-    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+  .text-neon {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
   }
 
-  .bounce {
+  .arrow-bounce {
     animation: arrowBounce 700ms ease-out;
   }
 
   @keyframes arrowBounce {
-    0% { transform: translateY(-50%) translateX(10px); }
-    60% { transform: translateY(-50%) translateX(-6px); }
-    100% { transform: translateY(-50%) translateX(0); }
+    0% { transform: translateY(-50%) translateX(10px) scale(1); }
+    60% { transform: translateY(-50%) translateX(-6px) scale(1.2); }
+    100% { transform: translateY(-50%) translateX(0) scale(1); }
+  }
+
+  @keyframes spin-ease {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(var(--final-rotation)); }
   }
 }
