@@ -240,7 +240,7 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
 
     return (
       <div className="relative flex items-center justify-center w-full">
-        <div className="relative w-[500px] h-[500px] max-w-[90vw] max-h-[90vw] sm:max-w-[80vmin] sm:max-h-[80vmin]">
+        <div className="relative w-full h-full max-w-[90vw] max-h-[90vw] sm:max-w-[min(700px,80vh)] sm:max-h-[min(700px,80vh)] aspect-square">
           <canvas
             ref={canvasRef}
             className="w-full h-full"
@@ -250,14 +250,14 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
           <div
             ref={arrowRef}
             className="absolute right-[-30px] top-1/2 -translate-y-1/2 z-20 
-                       sm:right-[-40px]
+                       sm:right-[-40px] lg:right-[-50px]
                        max-[640px]:right-auto max-[640px]:left-1/2 max-[640px]:-translate-x-1/2 
                        max-[640px]:top-auto max-[640px]:bottom-[-60px] max-[640px]:translate-y-0
                        max-[640px]:rotate-90"
           >
             <div className="relative">
-              <div className="w-0 h-0 border-t-[25px] border-t-transparent border-b-[25px] border-b-transparent border-l-[40px] border-l-primary neon-glow-purple sm:border-t-[30px] sm:border-b-[30px] sm:border-l-[50px]" />
-              <div className="absolute top-1/2 left-[-8px] -translate-y-1/2 w-2.5 h-2.5 bg-primary rounded-full animate-pulse-glow sm:w-3 sm:h-3 sm:left-[-10px]" />
+              <div className="w-0 h-0 border-t-[25px] border-t-transparent border-b-[25px] border-b-transparent border-l-[40px] border-l-primary neon-glow-purple sm:border-t-[30px] sm:border-b-[30px] sm:border-l-[50px] lg:border-t-[40px] lg:border-b-[40px] lg:border-l-[60px]" />
+              <div className="absolute top-1/2 left-[-8px] -translate-y-1/2 w-2.5 h-2.5 bg-primary rounded-full animate-pulse-glow sm:w-3 sm:h-3 sm:left-[-10px] lg:w-4 lg:h-4 lg:left-[-12px]" />
             </div>
           </div>
         </div>
