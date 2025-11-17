@@ -3,6 +3,7 @@ import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 export interface WheelSector {
   label: string;
   color: string;
+  weight?: number;
 }
 
 interface SpinningWheelProps {
@@ -172,6 +173,18 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       return 1 - Math.pow(1 - t, 3);
     };
 
+    const weightedPickIndex = (): number => {
+      const totalWeight = sectors.reduce((sum, sector) => sum + (sector.weight || 1), 0);
+      let random = Math.random() * totalWeight;
+      
+      for (let i = 0; i < sectors.length; i++) {
+        random -= (sectors[i].weight || 1);
+        if (random <= 0) return i;
+      }
+      
+      return sectors.length - 1;
+    };
+
     const spin = async () => {
       if (isSpinningRef.current) return;
       isSpinningRef.current = true;
@@ -179,8 +192,8 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       // Random duration between 7-20 seconds
       const duration = 7000 + Math.random() * 13000;
       
-      // Random winner
-      const winnerIndex = Math.floor(Math.random() * sectors.length);
+      // Weighted random winner selection
+      const winnerIndex = weightedPickIndex();
       
       // Calculate target rotation
       const anglePerSector = (2 * Math.PI) / sectors.length;
@@ -226,21 +239,25 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
     }));
 
     return (
-      <div className="relative flex items-center justify-center">
-        <div className="relative w-[500px] h-[500px] max-w-[80vmin] max-h-[80vmin]">
+      <div className="relative flex items-center justify-center w-full">
+        <div className="relative w-[500px] h-[500px] max-w-[90vw] max-h-[90vw] sm:max-w-[80vmin] sm:max-h-[80vmin]">
           <canvas
             ref={canvasRef}
             className="w-full h-full"
           />
           
-          {/* Arrow indicator on the right */}
+          {/* Arrow indicator - right on desktop, below on mobile */}
           <div
             ref={arrowRef}
-            className="absolute right-[-40px] top-1/2 -translate-y-1/2 z-20"
+            className="absolute right-[-30px] top-1/2 -translate-y-1/2 z-20 
+                       sm:right-[-40px]
+                       max-[640px]:right-auto max-[640px]:left-1/2 max-[640px]:-translate-x-1/2 
+                       max-[640px]:top-auto max-[640px]:bottom-[-60px] max-[640px]:translate-y-0
+                       max-[640px]:rotate-90"
           >
             <div className="relative">
-              <div className="w-0 h-0 border-t-[30px] border-t-transparent border-b-[30px] border-b-transparent border-l-[50px] border-l-primary neon-glow-purple" />
-              <div className="absolute top-1/2 left-[-10px] -translate-y-1/2 w-3 h-3 bg-primary rounded-full animate-pulse-glow" />
+              <div className="w-0 h-0 border-t-[25px] border-t-transparent border-b-[25px] border-b-transparent border-l-[40px] border-l-primary neon-glow-purple sm:border-t-[30px] sm:border-b-[30px] sm:border-l-[50px]" />
+              <div className="absolute top-1/2 left-[-8px] -translate-y-1/2 w-2.5 h-2.5 bg-primary rounded-full animate-pulse-glow sm:w-3 sm:h-3 sm:left-[-10px]" />
             </div>
           </div>
         </div>

@@ -5,22 +5,87 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
 
-const SECTORS: WheelSector[] = [
-  { label: "See you tomorrow ❤️", color: "#A855F7" },
-  { label: "FREE Billiard Game", color: "#EC4899" },
-  { label: "30 min Karaoke", color: "#06B6D4" },
-  { label: "See you tomorrow ❤️", color: "#3B82F6" },
-  { label: "30 min PS5", color: "#10B981" },
-  { label: "1 hour PS5", color: "#F59E0B" },
-  { label: "See you tomorrow ❤️", color: "#F97316" },
-  { label: "VR Roller Coaster", color: "#EF4444" },
-  { label: "Red Horse Beer", color: "#8B5CF6" },
-  { label: "Beer Tower", color: "#14B8A6" },
-  { label: "One Dance!", color: "#F43F5E" },
-  { label: "FREE Billiard Game", color: "#84CC16" },
+// Prize configuration with weights
+interface Prize {
+  label: string;
+  weight: number;
+  repeat?: number;
+}
+
+const PRIZES: Prize[] = [
+  { label: "See you tomorrow ❤️", weight: 46.95, repeat: 3 },
+  { label: "FREE Billiard Game", weight: 20, repeat: 2 },
+  { label: "30 min Karaoke", weight: 3 },
+  { label: "30 min PS5", weight: 5 },
+  { label: "1 hour PS5", weight: 3 },
+  { label: "VR Roller Coaster (1 race)", weight: 5 },
+  { label: "Red Horse Beer", weight: 2 },
+  { label: "Beer Tower", weight: 0.05 },
+  { label: "One Dance — Let's Dance", weight: 15 },
 ];
 
+const COLORS = [
+  '#A855F7', '#EC4899', '#06B6D4', '#3B82F6', 
+  '#10B981', '#F59E0B', '#F97316', '#EF4444', 
+  '#8B5CF6', '#14B8A6', '#F43F5E', '#84CC16'
+];
+
+// Generate sectors from prizes with smart shuffling
+const generateSectors = (): WheelSector[] => {
+  const sectors: WheelSector[] = [];
+  const seeTomorrowLabel = "See you tomorrow ❤️";
+  
+  PRIZES.forEach((prize, prizeIndex) => {
+    const repeat = prize.repeat || 1;
+    for (let i = 0; i < repeat; i++) {
+      sectors.push({
+        label: prize.label,
+        color: COLORS[sectors.length % COLORS.length],
+        weight: prize.weight
+      });
+    }
+  });
+  
+  // Shuffle avoiding adjacent "See you tomorrow" sectors
+  const shuffled: WheelSector[] = [];
+  const seeTomorrow = sectors.filter(s => s.label === seeTomorrowLabel);
+  const others = sectors.filter(s => s.label !== seeTomorrowLabel);
+  
+  // Shuffle both arrays
+  const shuffleArray = <T,>(arr: T[]): T[] => {
+    const newArr = [...arr];
+    for (let i = newArr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+    }
+    return newArr;
+  };
+  
+  const shuffledOthers = shuffleArray(others);
+  const shuffledSeeTomorrow = shuffleArray(seeTomorrow);
+  
+  // Interleave to avoid adjacency
+  let othersIdx = 0;
+  let seeTomorrowIdx = 0;
+  
+  while (othersIdx < shuffledOthers.length || seeTomorrowIdx < shuffledSeeTomorrow.length) {
+    if (othersIdx < shuffledOthers.length) {
+      shuffled.push(shuffledOthers[othersIdx++]);
+    }
+    if (seeTomorrowIdx < shuffledSeeTomorrow.length && shuffled.length > 0) {
+      shuffled.push(shuffledSeeTomorrow[seeTomorrowIdx++]);
+    }
+    if (othersIdx < shuffledOthers.length) {
+      shuffled.push(shuffledOthers[othersIdx++]);
+    }
+  }
+  
+  return shuffled;
+};
+
+const SECTORS = generateSectors();
 const STORAGE_KEY = 'prize-wheel-winners';
 
 const Index = () => {
@@ -67,27 +132,57 @@ const Index = () => {
   };
 
   const handleSpinEnd = (winnerIndex: number) => {
-    const prize = SECTORS[winnerIndex].label;
-    
-    if (soundEnabled && winSoundRef.current) {
-      winSoundRef.current.play().catch(() => {});
-    }
+    // Dramatic pause before showing result
+    setTimeout(() => {
+      const prize = SECTORS[winnerIndex].label;
+      const sectorColor = SECTORS[winnerIndex].color;
+      
+      if (soundEnabled && winSoundRef.current) {
+        winSoundRef.current.play().catch(() => {});
+      }
 
-    const newWinner: Winner = {
-      name: playerName,
-      prize,
-      timestamp: Date.now(),
-    };
+      // Confetti effect matching sector color
+      const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : { r: 168, g: 85, b: 247 };
+      };
+      
+      const rgb = hexToRgb(sectorColor);
+      
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: [
+          sectorColor,
+          `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
+          '#FFD700',
+          '#FF1493',
+          '#00FFFF'
+        ]
+      });
 
-    const updatedWinners = [newWinner, ...winners].slice(0, 10);
-    setWinners(updatedWinners);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWinners));
+      const newWinner: Winner = {
+        name: playerName,
+        prize,
+        timestamp: Date.now(),
+      };
 
-    toast.success(`🎉 ${playerName} won: ${prize}!`, {
-      duration: 5000,
-    });
+      const updatedWinners = [newWinner, ...winners].slice(0, 10);
+      setWinners(updatedWinners);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWinners));
 
-    setIsSpinning(false);
+      toast.success(`🎉 ${playerName} won: ${prize}!`, {
+        duration: 5000,
+        className: "text-lg font-bold",
+      });
+
+      setIsSpinning(false);
+    }, 500);
   };
 
   const handleReset = () => {
@@ -118,73 +213,78 @@ const Index = () => {
   }, [playerName, isSpinning]);
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 lg:p-8 relative">
-      {/* Background glow effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-purple/20 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-neon-cyan/20 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
-      </div>
-
-      {/* Top controls */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col sm:flex-row items-center gap-3">
-        <Input
-          type="text"
-          placeholder="Enter your name..."
-          value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
-          disabled={isSpinning}
-          className="w-[280px] sm:w-[320px] h-12 text-center text-lg bg-card/80 backdrop-blur-sm border-2 border-primary/50 focus:border-primary neon-glow-purple font-semibold"
-        />
-        <div className="flex gap-2">
-          <Button
-            onClick={handleSpin}
-            disabled={isSpinning || !playerName.trim()}
-            className="h-12 px-8 text-lg font-bold bg-gradient-to-r from-neon-purple to-neon-pink hover:scale-105 transition-all neon-glow-purple disabled:opacity-50 disabled:hover:scale-100"
-          >
-            {isSpinning ? "SPINNING..." : "SPIN"}
-          </Button>
-          <Button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            variant="outline"
-            size="icon"
-            className="h-12 w-12 border-primary/50 neon-glow-purple"
-          >
-            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-          </Button>
-          <Button
-            onClick={toggleFullscreen}
-            variant="outline"
-            size="icon"
-            className="h-12 w-12 border-primary/50 neon-glow-purple"
-          >
-            <Maximize2 className="w-5 h-5" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Main content grid */}
-      <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[300px_1fr_300px] gap-8 items-center mt-20 lg:mt-0">
-        {/* Leaderboard - Left side on desktop, below on mobile */}
-        <div className="order-3 lg:order-1 flex justify-center">
-          <WinnersLeaderboard winners={winners} onReset={handleReset} />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-8 overflow-hidden">
+      <div className="container mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="text-center mb-6 md:mb-8 animate-fade-in">
+          <h1 className="text-4xl md:text-7xl font-bold mb-2 md:mb-4 text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon">
+            Prize Wheel 🎡
+          </h1>
+          <p className="text-muted-foreground text-base md:text-lg">Spin to win amazing prizes!</p>
         </div>
 
-        {/* Wheel - Center */}
-        <div className="order-1 lg:order-2 flex justify-center">
-          <SpinningWheel
-            ref={wheelRef}
-            sectors={SECTORS}
-            onSpinEnd={handleSpinEnd}
-          />
+        {/* Main Content */}
+        <div className="flex flex-col lg:grid lg:grid-cols-[300px_1fr] gap-6 md:gap-8 items-start">
+          {/* Winners Leaderboard - Left Side on Desktop, Below on Mobile */}
+          <div className="order-2 lg:order-1 w-full lg:w-auto animate-fade-in">
+            <WinnersLeaderboard winners={winners} onReset={handleReset} />
+          </div>
+
+          {/* Center: Wheel and Controls */}
+          <div className="order-1 lg:order-2 flex flex-col items-center gap-6 md:gap-8 w-full animate-scale-in">
+            {/* Controls */}
+            <div className="w-full max-w-md space-y-3 md:space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Enter your name..."
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSpin()}
+                  className="flex-1 bg-background/50 backdrop-blur-sm border-2 border-primary/30 focus:border-primary text-base md:text-lg"
+                  disabled={isSpinning}
+                />
+                <Button
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  variant="outline"
+                  size="icon"
+                  className="border-2 border-primary/30 hover:border-primary transition-all"
+                >
+                  {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                </Button>
+                <Button
+                  onClick={toggleFullscreen}
+                  variant="outline"
+                  size="icon"
+                  className="border-2 border-primary/30 hover:border-primary transition-all"
+                >
+                  <Maximize2 className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <Button
+                onClick={handleSpin}
+                disabled={isSpinning}
+                className={`w-full h-12 md:h-14 text-lg md:text-xl font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-105 transition-all neon-glow-purple ${!isSpinning && 'animate-pulse-glow'}`}
+                size="lg"
+              >
+                {isSpinning ? "SPINNING..." : "🎯 SPIN THE WHEEL"}
+              </Button>
+            </div>
+
+            {/* Spinning Wheel */}
+            <SpinningWheel
+              ref={wheelRef}
+              sectors={SECTORS}
+              onSpinEnd={handleSpinEnd}
+            />
+          </div>
         </div>
 
-        {/* Empty space for symmetry on desktop */}
-        <div className="order-2 lg:order-3 hidden lg:block" />
-      </div>
-
-      {/* Footer info */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-muted-foreground text-sm">
-        <p>Press Enter to spin • F11 for fullscreen</p>
+        {/* Footer */}
+        <footer className="text-center mt-8 md:mt-12 text-muted-foreground text-xs md:text-sm animate-fade-in">
+          <p>Press Enter or click SPIN to play • Good luck! 🍀</p>
+        </footer>
       </div>
     </div>
   );
