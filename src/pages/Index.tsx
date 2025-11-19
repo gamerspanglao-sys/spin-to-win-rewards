@@ -273,11 +273,13 @@ const Index = () => {
             </div>
 
             {/* Spinning Wheel */}
-            <SpinningWheel
-              ref={wheelRef}
-              sectors={SECTORS}
-              onSpinEnd={handleSpinEnd}
-            />
+            <div className="w-full flex items-center justify-center" style={{ height: 'min(90vw, 80vh, 700px)' }}>
+              <SpinningWheel
+                ref={wheelRef}
+                sectors={SECTORS}
+                onSpinEnd={handleSpinEnd}
+              />
+            </div>
           </div>
         </div>
 
