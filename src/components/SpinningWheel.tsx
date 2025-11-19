@@ -239,8 +239,8 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
     }));
 
     return (
-      <div className="relative flex items-center justify-center w-full">
-        <div className="relative w-full h-full max-w-[90vw] max-h-[90vw] sm:max-w-[min(700px,80vh)] sm:max-h-[min(700px,80vh)] aspect-square">
+      <div className="relative flex items-center justify-center w-full h-full">
+        <div className="relative w-full h-full max-w-full max-h-full aspect-square">
           <canvas
             ref={canvasRef}
             className="w-full h-full"
