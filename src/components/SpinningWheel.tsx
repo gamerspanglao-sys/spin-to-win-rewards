@@ -45,9 +45,10 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       if (!ctx) return;
 
       const rect = canvas.getBoundingClientRect();
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const radius = Math.min(canvas.width, canvas.height) / 2 - 20;
+      const size = Math.min(rect.width, rect.height);
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const radius = size / 2 - 20;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
@@ -152,7 +153,7 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
 
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.scale(ratio, ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       }
     };
 
