@@ -13,6 +13,7 @@ interface SpinningWheelProps {
 
 export interface SpinningWheelRef {
   spin: () => void;
+  highlightWinner: (index: number) => void;
 }
 
 const COLORS = [
@@ -35,7 +36,8 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const rotationRef = useRef(0);
     const isSpinningRef = useRef(false);
-    const arrowRef = useRef<HTMLDivElement>(null);
+    const winnerIndexRef = useRef<number | null>(null);
+    const highlightAnimationRef = useRef<number>(0);
 
     const drawWheel = (rotation: number) => {
       const canvas = canvasRef.current;
@@ -56,6 +58,11 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       ctx.rotate(rotation);
 
       const anglePerSector = (2 * Math.PI) / sectors.length;
+      
+      // Calculate highlight pulse for winner
+      const highlightPulse = winnerIndexRef.current !== null 
+        ? 0.3 + Math.sin(highlightAnimationRef.current * 0.1) * 0.2 
+        : 0;
 
       // Draw sectors
       sectors.forEach((sector, i) => {
@@ -70,6 +77,19 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
         ctx.closePath();
         ctx.fillStyle = sector.color || COLORS[i % COLORS.length];
         ctx.fill();
+        
+        // Highlight winner sector with glow
+        if (winnerIndexRef.current === i) {
+          ctx.shadowColor = 'rgba(255, 215, 0, ' + highlightPulse + ')';
+          ctx.shadowBlur = 30;
+          ctx.fillStyle = sector.color || COLORS[i % COLORS.length];
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          
+          // Golden overlay
+          ctx.fillStyle = 'rgba(255, 215, 0, ' + (highlightPulse * 0.3) + ')';
+          ctx.fill();
+        }
 
         // Draw border
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
@@ -134,6 +154,59 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       ctx.stroke();
 
       ctx.restore();
+      
+      // Draw fancy arrow pointer (fixed position at right)
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      
+      const arrowX = radius + 10;
+      
+      // Arrow shadow/glow
+      ctx.shadowColor = 'rgba(168, 85, 247, 0.8)';
+      ctx.shadowBlur = 20;
+      
+      // Main arrow body (3D style)
+      ctx.beginPath();
+      ctx.moveTo(arrowX + 35, 0); // Tip
+      ctx.lineTo(arrowX - 10, -25); // Top
+      ctx.lineTo(arrowX + 5, 0); // Middle indent
+      ctx.lineTo(arrowX - 10, 25); // Bottom
+      ctx.closePath();
+      
+      // Gradient fill for 3D effect
+      const gradient = ctx.createLinearGradient(arrowX - 10, -25, arrowX + 35, 0);
+      gradient.addColorStop(0, '#A855F7');
+      gradient.addColorStop(0.5, '#EC4899');
+      gradient.addColorStop(1, '#F97316');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // Arrow border
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      
+      ctx.shadowBlur = 0;
+      
+      // Inner highlight
+      ctx.beginPath();
+      ctx.moveTo(arrowX + 30, 0);
+      ctx.lineTo(arrowX, -18);
+      ctx.lineTo(arrowX + 8, 0);
+      ctx.lineTo(arrowX, 18);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fill();
+      
+      // Glowing dot at tip
+      ctx.beginPath();
+      ctx.arc(arrowX + 35, 0, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = '#FFD700';
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur = 15;
+      ctx.fill();
+      
+      ctx.restore();
     };
 
     const fitCanvas = () => {
@@ -167,7 +240,22 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       };
 
       window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      
+      // Animation loop for winner highlight
+      let animationFrame: number;
+      const animate = () => {
+        if (winnerIndexRef.current !== null) {
+          highlightAnimationRef.current += 1;
+          drawWheel(rotationRef.current);
+        }
+        animationFrame = requestAnimationFrame(animate);
+      };
+      animationFrame = requestAnimationFrame(animate);
+      
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        cancelAnimationFrame(animationFrame);
+      };
     }, [sectors]);
 
     const easeOutCubic = (t: number): number => {
@@ -189,6 +277,7 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
     const spin = async () => {
       if (isSpinningRef.current) return;
       isSpinningRef.current = true;
+      winnerIndexRef.current = null; // Clear previous winner highlight
 
       // Random duration between 7-20 seconds
       const duration = 7000 + Math.random() * 13000;
@@ -220,14 +309,9 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
         } else {
           // Spin complete
           isSpinningRef.current = false;
+          winnerIndexRef.current = winnerIndex;
+          highlightAnimationRef.current = 0;
           
-          // Trigger arrow bounce
-          if (arrowRef.current) {
-            arrowRef.current.classList.remove('arrow-bounce');
-            void arrowRef.current.offsetWidth; // Force reflow
-            arrowRef.current.classList.add('arrow-bounce');
-          }
-
           onSpinEnd(winnerIndex);
         }
       };
@@ -235,8 +319,14 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       requestAnimationFrame(animate);
     };
 
+    const highlightWinner = (index: number) => {
+      winnerIndexRef.current = index;
+      highlightAnimationRef.current = 0;
+    };
+
     useImperativeHandle(ref, () => ({
       spin,
+      highlightWinner,
     }));
 
     return (
@@ -246,26 +336,6 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
             ref={canvasRef}
             className="w-full h-full"
           />
-          
-          {/* Яркая стрелка-указатель справа */}
-          <div
-            ref={arrowRef}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[20px] z-20"
-          >
-            <div className="relative flex items-center gap-2">
-              {/* Светящаяся точка */}
-              <div className="w-4 h-4 bg-primary rounded-full animate-pulse-glow neon-glow-purple shadow-[0_0_20px_rgba(168,85,247,0.8)]" />
-              
-              {/* Большая треугольная стрелка */}
-              <div className="relative">
-                <div className="w-0 h-0 border-t-[35px] border-t-transparent border-b-[35px] border-b-transparent border-r-[50px] border-r-primary neon-glow-purple shadow-[0_0_30px_rgba(168,85,247,0.6)]" 
-                     style={{ filter: 'drop-shadow(0 0 15px rgba(168, 85, 247, 0.9))' }}
-                />
-                {/* Внутренняя светящаяся линия */}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[45px] h-[3px] bg-gradient-to-r from-white to-transparent opacity-70" />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     );

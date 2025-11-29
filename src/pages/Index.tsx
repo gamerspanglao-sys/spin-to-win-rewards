@@ -93,9 +93,11 @@ const Index = () => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [winners, setWinners] = useState<Winner[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [cooldownTime, setCooldownTime] = useState(0);
   const wheelRef = useRef<SpinningWheelRef>(null);
   const spinSoundRef = useRef<HTMLAudioElement | null>(null);
   const winSoundRef = useRef<HTMLAudioElement | null>(null);
+  const tickSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     // Load winners from localStorage
@@ -108,10 +110,29 @@ const Index = () => {
       }
     }
 
-    // Create audio elements for sound effects
-    spinSoundRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUKXh8LdjGwU5k9nyyXosBSp+zPLaizsKHGC47OymUhQJQp3e8L1rIAUqfs/z3Ik3CBlnvO/knEwMDlCm4fC3YhsFOpPY8sp6KwUpecrw2Yo5CRxfu+zspVEUCUGb3vC9aiAFK3/Q8N2JOAYYY7zv5JtLDA1Qp+HwuGUcBTmT2fPJeiwFKHnJ8NqLOwocXrvs7KVSFQlBnN7wvWsgBSuA0fLcizgJGGK+8OSaSgwNUKjh8Lhl');
-    winSoundRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUKXh8LdjGwU5k9nyyXosBSp+zPLaizsKHGC47OymUhQJQp3e8L1rIAUqfs/z3Ik3CBlnvO/knEwMDlCm4fC3YhsFOpPY8sp6KwUpecrw2Yo5CRxfu+zspVEUCUGb3vC9aiAFK3/Q8N2JOAYYY7zv5JtLDA1Qp+HwuGUcBTmT2fPJeiwFKHnJ8NqLOwocXrvs7KVSFQlBnN7wvWsgBSuA0fLcizgJGGK+8OSaSgwNUKjh8Lhl');
+    // Create audio elements with better quality sounds
+    // Spinning sound - mechanical ratchet
+    spinSoundRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+    spinSoundRef.current.volume = 0.3;
+    
+    // Win sound - victory fanfare
+    winSoundRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+    winSoundRef.current.volume = 0.5;
+    
+    // Tick sound for spinning effect
+    tickSoundRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+    tickSoundRef.current.volume = 0.1;
   }, []);
+  
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldownTime > 0) {
+      const timer = setTimeout(() => {
+        setCooldownTime(cooldownTime - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldownTime]);
 
   const handleSpin = () => {
     const name = playerName.trim();
@@ -121,10 +142,16 @@ const Index = () => {
     }
 
     if (isSpinning) return;
+    
+    if (cooldownTime > 0) {
+      toast.error(`Please wait ${cooldownTime} seconds before spinning again!`);
+      return;
+    }
 
     setIsSpinning(true);
     
     if (soundEnabled && spinSoundRef.current) {
+      spinSoundRef.current.currentTime = 0;
       spinSoundRef.current.play().catch(() => {});
     }
 
@@ -137,7 +164,14 @@ const Index = () => {
       const prize = SECTORS[winnerIndex].label;
       const sectorColor = SECTORS[winnerIndex].color;
       
+      // Stop spin sound and play win sound
+      if (spinSoundRef.current) {
+        spinSoundRef.current.pause();
+        spinSoundRef.current.currentTime = 0;
+      }
+      
       if (soundEnabled && winSoundRef.current) {
+        winSoundRef.current.currentTime = 0;
         winSoundRef.current.play().catch(() => {});
       }
 
@@ -182,6 +216,7 @@ const Index = () => {
       });
 
       setIsSpinning(false);
+      setCooldownTime(60); // 60 second cooldown
     }, 500);
   };
 
@@ -264,11 +299,11 @@ const Index = () => {
 
               <Button
                 onClick={handleSpin}
-                disabled={isSpinning}
-                className={`w-full h-12 md:h-14 text-lg md:text-xl font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-105 transition-all neon-glow-purple ${!isSpinning && 'animate-pulse-glow'}`}
+                disabled={isSpinning || cooldownTime > 0}
+                className={`w-full h-12 md:h-14 text-lg md:text-xl font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-105 transition-all neon-glow-purple ${!isSpinning && cooldownTime === 0 && 'animate-pulse-glow'}`}
                 size="lg"
               >
-                {isSpinning ? "SPINNING..." : "🎯 SPIN THE WHEEL"}
+                {isSpinning ? "SPINNING..." : cooldownTime > 0 ? `WAIT ${cooldownTime}s` : "🎯 SPIN THE WHEEL"}
               </Button>
             </div>
 
