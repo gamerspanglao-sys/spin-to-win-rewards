@@ -247,18 +247,23 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
             className="w-full h-full"
           />
           
-          {/* Arrow indicator - right on desktop, below on mobile */}
+          {/* Яркая стрелка-указатель справа */}
           <div
             ref={arrowRef}
-            className="absolute right-[-30px] top-1/2 -translate-y-1/2 z-20 
-                       sm:right-[-40px] lg:right-[-50px]
-                       max-[640px]:right-auto max-[640px]:left-1/2 max-[640px]:-translate-x-1/2 
-                       max-[640px]:top-auto max-[640px]:bottom-[-60px] max-[640px]:translate-y-0
-                       max-[640px]:rotate-90"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[20px] z-20"
           >
-            <div className="relative">
-              <div className="w-0 h-0 border-t-[25px] border-t-transparent border-b-[25px] border-b-transparent border-l-[40px] border-l-primary neon-glow-purple sm:border-t-[30px] sm:border-b-[30px] sm:border-l-[50px] lg:border-t-[40px] lg:border-b-[40px] lg:border-l-[60px]" />
-              <div className="absolute top-1/2 left-[-8px] -translate-y-1/2 w-2.5 h-2.5 bg-primary rounded-full animate-pulse-glow sm:w-3 sm:h-3 sm:left-[-10px] lg:w-4 lg:h-4 lg:left-[-12px]" />
+            <div className="relative flex items-center gap-2">
+              {/* Светящаяся точка */}
+              <div className="w-4 h-4 bg-primary rounded-full animate-pulse-glow neon-glow-purple shadow-[0_0_20px_rgba(168,85,247,0.8)]" />
+              
+              {/* Большая треугольная стрелка */}
+              <div className="relative">
+                <div className="w-0 h-0 border-t-[35px] border-t-transparent border-b-[35px] border-b-transparent border-r-[50px] border-r-primary neon-glow-purple shadow-[0_0_30px_rgba(168,85,247,0.6)]" 
+                     style={{ filter: 'drop-shadow(0 0 15px rgba(168, 85, 247, 0.9))' }}
+                />
+                {/* Внутренняя светящаяся линия */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[45px] h-[3px] bg-gradient-to-r from-white to-transparent opacity-70" />
+              </div>
             </div>
           </div>
         </div>
