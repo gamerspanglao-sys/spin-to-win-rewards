@@ -155,55 +155,56 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
 
       ctx.restore();
       
-      // Draw fancy arrow pointer (fixed position at LEFT - pointing left)
+      // Draw winner marker at TOP (fixed position pointing down)
       ctx.save();
       ctx.translate(centerX, centerY);
       
-      const arrowX = -(radius + 10);
+      const markerY = -(radius + 15);
       
-      // Arrow shadow/glow
-      ctx.shadowColor = 'rgba(168, 85, 247, 0.8)';
-      ctx.shadowBlur = 20;
+      // Glow effect
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
+      ctx.shadowBlur = 25;
       
-      // Main arrow body (3D style) - pointing LEFT
+      // Diamond/gem shape marker
       ctx.beginPath();
-      ctx.moveTo(arrowX - 35, 0); // Tip (left)
-      ctx.lineTo(arrowX + 10, -25); // Top
-      ctx.lineTo(arrowX - 5, 0); // Middle indent
-      ctx.lineTo(arrowX + 10, 25); // Bottom
+      ctx.moveTo(0, markerY - 35); // Top point
+      ctx.lineTo(20, markerY - 15); // Right
+      ctx.lineTo(0, markerY + 10); // Bottom point (pointing to wheel)
+      ctx.lineTo(-20, markerY - 15); // Left
       ctx.closePath();
       
-      // Gradient fill for 3D effect
-      const gradient = ctx.createLinearGradient(arrowX + 10, -25, arrowX - 35, 0);
-      gradient.addColorStop(0, '#A855F7');
-      gradient.addColorStop(0.5, '#EC4899');
-      gradient.addColorStop(1, '#F97316');
-      ctx.fillStyle = gradient;
+      // Gradient fill
+      const markerGradient = ctx.createLinearGradient(-20, markerY - 35, 20, markerY + 10);
+      markerGradient.addColorStop(0, '#FFD700');
+      markerGradient.addColorStop(0.5, '#FFA500');
+      markerGradient.addColorStop(1, '#FF6B6B');
+      ctx.fillStyle = markerGradient;
       ctx.fill();
       
-      // Arrow border
+      // White border
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 3;
       ctx.stroke();
       
       ctx.shadowBlur = 0;
       
-      // Inner highlight
+      // Inner shine
       ctx.beginPath();
-      ctx.moveTo(arrowX - 30, 0);
-      ctx.lineTo(arrowX, -18);
-      ctx.lineTo(arrowX - 8, 0);
-      ctx.lineTo(arrowX, 18);
+      ctx.moveTo(0, markerY - 30);
+      ctx.lineTo(12, markerY - 15);
+      ctx.lineTo(0, markerY);
+      ctx.lineTo(-12, markerY - 15);
       ctx.closePath();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.fill();
       
-      // Glowing dot at tip
+      // Animated sparkle at tip
+      const sparkleSize = 3 + Math.sin(Date.now() * 0.01) * 2;
       ctx.beginPath();
-      ctx.arc(arrowX - 35, 0, 6, 0, 2 * Math.PI);
-      ctx.fillStyle = '#FFD700';
+      ctx.arc(0, markerY + 10, sparkleSize, 0, 2 * Math.PI);
+      ctx.fillStyle = '#FFFFFF';
       ctx.shadowColor = '#FFD700';
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 10;
       ctx.fill();
       
       ctx.restore();
@@ -289,9 +290,9 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       const anglePerSector = (2 * Math.PI) / sectors.length;
       const winnerAngle = winnerIndex * anglePerSector + anglePerSector / 2;
       
-      // We want the arrow (at PI radians, pointing left) to point to the winner
-      // So we rotate the wheel so the winner sector's center is at PI
-      const targetRotation = Math.PI - winnerAngle + Math.PI * 2 * (5 + Math.floor(Math.random() * 5)); // 5-10 full rotations
+      // We want the marker (at top, -PI/2 radians) to point to the winner
+      // So we rotate the wheel so the winner sector's center is at top
+      const targetRotation = -Math.PI / 2 - winnerAngle + Math.PI * 2 * (5 + Math.floor(Math.random() * 5)); // 5-10 full rotations
       
       const startRotation = rotationRef.current;
       const startTime = performance.now();
