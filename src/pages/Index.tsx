@@ -110,18 +110,41 @@ const Index = () => {
       }
     }
 
-    // Create audio elements with better quality sounds
-    // Spinning sound - mechanical ratchet
-    spinSoundRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
-    spinSoundRef.current.volume = 0.3;
+    // Create simple audio using Web Audio API for compatibility
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
-    // Win sound - victory fanfare
-    winSoundRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
-    winSoundRef.current.volume = 0.5;
+    // Create spin sound (mechanical whir)
+    const createSpinSound = () => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 100;
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.5);
+    };
     
-    // Tick sound for spinning effect
-    tickSoundRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-    tickSoundRef.current.volume = 0.1;
+    // Create win sound (victory chime)
+    const createWinSound = () => {
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, i) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = freq;
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.5);
+        oscillator.start(audioContext.currentTime + i * 0.15);
+        oscillator.stop(audioContext.currentTime + i * 0.15 + 0.5);
+      });
+    };
+    
+    // Store functions
+    (spinSoundRef.current as any) = { play: () => createSpinSound() };
+    (winSoundRef.current as any) = { play: () => createWinSound() };
   }, []);
   
   // Cooldown timer
@@ -151,8 +174,7 @@ const Index = () => {
     setIsSpinning(true);
     
     if (soundEnabled && spinSoundRef.current) {
-      spinSoundRef.current.currentTime = 0;
-      spinSoundRef.current.play().catch(() => {});
+      (spinSoundRef.current as any).play();
     }
 
     wheelRef.current?.spin();
@@ -164,15 +186,9 @@ const Index = () => {
       const prize = SECTORS[winnerIndex].label;
       const sectorColor = SECTORS[winnerIndex].color;
       
-      // Stop spin sound and play win sound
-      if (spinSoundRef.current) {
-        spinSoundRef.current.pause();
-        spinSoundRef.current.currentTime = 0;
-      }
-      
+      // Play win sound
       if (soundEnabled && winSoundRef.current) {
-        winSoundRef.current.currentTime = 0;
-        winSoundRef.current.play().catch(() => {});
+        (winSoundRef.current as any).play();
       }
 
       // Confetti effect matching sector color

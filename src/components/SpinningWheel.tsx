@@ -155,26 +155,26 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
 
       ctx.restore();
       
-      // Draw fancy arrow pointer (fixed position at right)
+      // Draw fancy arrow pointer (fixed position at LEFT - pointing left)
       ctx.save();
       ctx.translate(centerX, centerY);
       
-      const arrowX = radius + 10;
+      const arrowX = -(radius + 10);
       
       // Arrow shadow/glow
       ctx.shadowColor = 'rgba(168, 85, 247, 0.8)';
       ctx.shadowBlur = 20;
       
-      // Main arrow body (3D style)
+      // Main arrow body (3D style) - pointing LEFT
       ctx.beginPath();
-      ctx.moveTo(arrowX + 35, 0); // Tip
-      ctx.lineTo(arrowX - 10, -25); // Top
-      ctx.lineTo(arrowX + 5, 0); // Middle indent
-      ctx.lineTo(arrowX - 10, 25); // Bottom
+      ctx.moveTo(arrowX - 35, 0); // Tip (left)
+      ctx.lineTo(arrowX + 10, -25); // Top
+      ctx.lineTo(arrowX - 5, 0); // Middle indent
+      ctx.lineTo(arrowX + 10, 25); // Bottom
       ctx.closePath();
       
       // Gradient fill for 3D effect
-      const gradient = ctx.createLinearGradient(arrowX - 10, -25, arrowX + 35, 0);
+      const gradient = ctx.createLinearGradient(arrowX + 10, -25, arrowX - 35, 0);
       gradient.addColorStop(0, '#A855F7');
       gradient.addColorStop(0.5, '#EC4899');
       gradient.addColorStop(1, '#F97316');
@@ -190,9 +190,9 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       
       // Inner highlight
       ctx.beginPath();
-      ctx.moveTo(arrowX + 30, 0);
+      ctx.moveTo(arrowX - 30, 0);
       ctx.lineTo(arrowX, -18);
-      ctx.lineTo(arrowX + 8, 0);
+      ctx.lineTo(arrowX - 8, 0);
       ctx.lineTo(arrowX, 18);
       ctx.closePath();
       ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -200,7 +200,7 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       
       // Glowing dot at tip
       ctx.beginPath();
-      ctx.arc(arrowX + 35, 0, 6, 0, 2 * Math.PI);
+      ctx.arc(arrowX - 35, 0, 6, 0, 2 * Math.PI);
       ctx.fillStyle = '#FFD700';
       ctx.shadowColor = '#FFD700';
       ctx.shadowBlur = 15;
@@ -289,9 +289,9 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       const anglePerSector = (2 * Math.PI) / sectors.length;
       const winnerAngle = winnerIndex * anglePerSector + anglePerSector / 2;
       
-      // We want the arrow (at 0 radians, pointing right) to point to the winner
-      // So we rotate the wheel so the winner sector's center is at 0
-      const targetRotation = -winnerAngle + Math.PI * 2 * (5 + Math.floor(Math.random() * 5)); // 5-10 full rotations
+      // We want the arrow (at PI radians, pointing left) to point to the winner
+      // So we rotate the wheel so the winner sector's center is at PI
+      const targetRotation = Math.PI - winnerAngle + Math.PI * 2 * (5 + Math.floor(Math.random() * 5)); // 5-10 full rotations
       
       const startRotation = rotationRef.current;
       const startTime = performance.now();
