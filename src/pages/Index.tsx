@@ -323,19 +323,17 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-auto">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className={`text-center animate-fade-in ${isFullscreen ? 'mb-2' : 'mb-4 md:mb-6'}`}>
-          <h1 className={`font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider ${isFullscreen ? 'text-3xl' : 'text-4xl md:text-6xl'}`}>
-            GAMERS
-          </h1>
-        </div>
-
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-center lg:items-start">
           {/* Center: Wheel and Controls */}
           <div className="flex-1 flex flex-col items-center gap-4 w-full order-1">
             {/* Controls */}
             <div className="w-full max-w-md space-y-3">
+              {/* Header - aligned with controls */}
+              <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider text-center animate-fade-in">
+                GAMERS
+              </h1>
+              
               <div className="flex gap-2">
                 <Input
                   type="text"
