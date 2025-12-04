@@ -290,9 +290,13 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       const anglePerSector = (2 * Math.PI) / sectors.length;
       const winnerAngle = winnerIndex * anglePerSector + anglePerSector / 2;
       
-      // We want the marker (at top, -PI/2 radians) to point to the winner
-      // So we rotate the wheel so the winner sector's center is at top
-      const targetRotation = -Math.PI / 2 - winnerAngle + Math.PI * 2 * (5 + Math.floor(Math.random() * 5)); // 5-10 full rotations
+      // Always spin forward by adding extra full rotations to current position
+      const extraRotations = Math.PI * 2 * (8 + Math.floor(Math.random() * 5)); // 8-12 full rotations
+      const targetAngle = -Math.PI / 2 - winnerAngle; // Where we want to stop
+      
+      // Normalize target to be ahead of current rotation
+      const currentNormalized = rotationRef.current % (Math.PI * 2);
+      const targetRotation = rotationRef.current + extraRotations + (targetAngle - currentNormalized);
       
       const startRotation = rotationRef.current;
       const startTime = performance.now();
