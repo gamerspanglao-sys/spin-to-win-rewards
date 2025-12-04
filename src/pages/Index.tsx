@@ -20,11 +20,11 @@ const PRIZES: Prize[] = [
   { label: "30 min Karaoke", weight: 3 },
   { label: "30 min PS5", weight: 5 },
   { label: "1 hour PS5", weight: 3 },
-  { label: "VR Roller Coaster (1 race)", weight: 5 },
+  { label: "VR 1 Game", weight: 5 },
   { label: "Red Horse Beer", weight: 2 },
   { label: "Beer Tower", weight: 0.05 },
-  { label: "Tequila Shot 🥃", weight: 15 },
-  { label: "Rum Coke 🍹", weight: 5 },
+  { label: "Tequila Shot 🥃", weight: 2 },
+  { label: "Rum Coke 🍹", weight: 2 },
   { label: "Cola Glass 🥤", weight: 10 },
 ];
 
