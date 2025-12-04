@@ -112,40 +112,67 @@ const Index = () => {
       }
     }
 
-    // Create simple audio using Web Audio API for compatibility
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    // Create audio context for sounds
+    let audioContext: AudioContext | null = null;
+    let spinOscillator: OscillatorNode | null = null;
+    let spinGain: GainNode | null = null;
     
-    // Create spin sound (mechanical whir)
-    const createSpinSound = () => {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 100;
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.5);
+    const getAudioContext = () => {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      return audioContext;
+    };
+    
+    // Create continuous spin sound
+    const startSpinSound = () => {
+      const ctx = getAudioContext();
+      spinOscillator = ctx.createOscillator();
+      spinGain = ctx.createGain();
+      
+      spinOscillator.connect(spinGain);
+      spinGain.connect(ctx.destination);
+      
+      spinOscillator.type = 'sawtooth';
+      spinOscillator.frequency.value = 80;
+      spinGain.gain.value = 0.15;
+      
+      spinOscillator.start();
+    };
+    
+    const stopSpinSound = () => {
+      if (spinGain) {
+        spinGain.gain.exponentialRampToValueAtTime(0.001, getAudioContext().currentTime + 0.5);
+      }
+      setTimeout(() => {
+        spinOscillator?.stop();
+        spinOscillator = null;
+        spinGain = null;
+      }, 500);
     };
     
     // Create win sound (victory chime)
     const createWinSound = () => {
+      const ctx = getAudioContext();
       const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
       notes.forEach((freq, i) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
         oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        gainNode.connect(ctx.destination);
         oscillator.frequency.value = freq;
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.15);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.5);
-        oscillator.start(audioContext.currentTime + i * 0.15);
-        oscillator.stop(audioContext.currentTime + i * 0.15 + 0.5);
+        gainNode.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.5);
+        oscillator.start(ctx.currentTime + i * 0.15);
+        oscillator.stop(ctx.currentTime + i * 0.15 + 0.5);
       });
     };
     
     // Store functions
-    (spinSoundRef.current as any) = { play: () => createSpinSound() };
+    (spinSoundRef.current as any) = { 
+      play: () => startSpinSound(),
+      stop: () => stopSpinSound()
+    };
     (winSoundRef.current as any) = { play: () => createWinSound() };
   }, []);
   
@@ -183,6 +210,11 @@ const Index = () => {
   };
 
   const handleSpinEnd = (winnerIndex: number) => {
+    // Stop spin sound
+    if (soundEnabled && spinSoundRef.current) {
+      (spinSoundRef.current as any).stop?.();
+    }
+    
     // Dramatic pause before showing result
     setTimeout(() => {
       const prize = SECTORS[winnerIndex].label;
@@ -269,8 +301,8 @@ const Index = () => {
     <div className="h-screen bg-gradient-to-br from-background via-background to-primary/10 p-2 md:p-4 overflow-hidden flex flex-col">
       {/* Header */}
       <div className="text-center mb-2 md:mb-4 animate-fade-in flex-shrink-0">
-        <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon">
-          GAMERS 🎮
+        <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider">
+          GAMERS
         </h1>
       </div>
 

@@ -280,8 +280,8 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       isSpinningRef.current = true;
       winnerIndexRef.current = null; // Clear previous winner highlight
 
-      // Random duration between 7-20 seconds
-      const duration = 7000 + Math.random() * 13000;
+      // Random duration between 10-25 seconds
+      const duration = 10000 + Math.random() * 15000;
       
       // Weighted random winner selection
       const winnerIndex = weightedPickIndex();
