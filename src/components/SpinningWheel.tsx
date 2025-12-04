@@ -331,13 +331,11 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
     }));
 
     return (
-      <div className="relative flex items-center justify-center w-full h-full max-h-full overflow-hidden">
-        <div className="relative" style={{ width: 'min(100%, 100vh - 180px)', height: 'min(100%, 100vh - 180px)', maxWidth: '700px', maxHeight: '700px' }}>
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full"
-          />
-        </div>
+      <div className="relative flex items-center justify-center w-full h-full">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full"
+        />
       </div>
     );
   }
