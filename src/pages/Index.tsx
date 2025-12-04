@@ -23,7 +23,9 @@ const PRIZES: Prize[] = [
   { label: "VR Roller Coaster (1 race)", weight: 5 },
   { label: "Red Horse Beer", weight: 2 },
   { label: "Beer Tower", weight: 0.05 },
-  { label: "One Dance — Let's Dance", weight: 15 },
+  { label: "Tequila Shot 🥃", weight: 15 },
+  { label: "Rum Coke 🍹", weight: 5 },
+  { label: "Cola Glass 🥤", weight: 10 },
 ];
 
 const COLORS = [
