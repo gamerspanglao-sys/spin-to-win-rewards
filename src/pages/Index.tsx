@@ -266,80 +266,72 @@ const Index = () => {
   }, [playerName, isSpinning]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-8 overflow-hidden">
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="text-center mb-6 md:mb-8 animate-fade-in">
-          <h1 className="text-4xl md:text-7xl font-bold mb-2 md:mb-4 text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon">
-            Prize Wheel 🎡
-          </h1>
-          <p className="text-muted-foreground text-base md:text-lg">Spin to win amazing prizes!</p>
+    <div className="h-screen bg-gradient-to-br from-background via-background to-primary/10 p-2 md:p-4 overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="text-center mb-2 md:mb-4 animate-fade-in flex-shrink-0">
+        <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon">
+          GAMERS 🎮
+        </h1>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 md:gap-4 min-h-0">
+        {/* Winners Leaderboard - Left Side */}
+        <div className="order-2 lg:order-1 w-full lg:w-[280px] flex-shrink-0 animate-fade-in">
+          <WinnersLeaderboard winners={winners} onReset={handleReset} />
         </div>
 
-        {/* Main Content */}
-        <div className="flex flex-col lg:grid lg:grid-cols-[300px_1fr] gap-6 md:gap-8 items-start">
-          {/* Winners Leaderboard - Left Side on Desktop, Below on Mobile */}
-          <div className="order-2 lg:order-1 w-full lg:w-auto animate-fade-in">
-            <WinnersLeaderboard winners={winners} onReset={handleReset} />
-          </div>
-
-          {/* Center: Wheel and Controls */}
-          <div className="order-1 lg:order-2 flex flex-col items-center gap-6 md:gap-8 w-full animate-scale-in">
-            {/* Controls */}
-            <div className="w-full max-w-md space-y-3 md:space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Enter your name..."
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSpin()}
-                  className="flex-1 bg-background/50 backdrop-blur-sm border-2 border-primary/30 focus:border-primary text-base md:text-lg"
-                  disabled={isSpinning}
-                />
-                <Button
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  variant="outline"
-                  size="icon"
-                  className="border-2 border-primary/30 hover:border-primary transition-all"
-                >
-                  {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                </Button>
-                <Button
-                  onClick={toggleFullscreen}
-                  variant="outline"
-                  size="icon"
-                  className="border-2 border-primary/30 hover:border-primary transition-all"
-                >
-                  <Maximize2 className="w-5 h-5" />
-                </Button>
-              </div>
-
+        {/* Center: Wheel and Controls */}
+        <div className="order-1 lg:order-2 flex-1 flex flex-col items-center gap-2 md:gap-3 min-h-0">
+          {/* Controls */}
+          <div className="w-full max-w-md space-y-2 flex-shrink-0">
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Enter your name..."
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSpin()}
+                className="flex-1 bg-background/50 backdrop-blur-sm border-2 border-primary/30 focus:border-primary text-base"
+                disabled={isSpinning}
+              />
               <Button
-                onClick={handleSpin}
-                disabled={isSpinning || cooldownTime > 0}
-                className={`w-full h-12 md:h-14 text-lg md:text-xl font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-105 transition-all neon-glow-purple ${!isSpinning && cooldownTime === 0 && 'animate-pulse-glow'}`}
-                size="lg"
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                variant="outline"
+                size="icon"
+                className="border-2 border-primary/30 hover:border-primary transition-all"
               >
-                {isSpinning ? "SPINNING..." : cooldownTime > 0 ? `WAIT ${cooldownTime}s` : "🎯 SPIN THE WHEEL"}
+                {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              </Button>
+              <Button
+                onClick={toggleFullscreen}
+                variant="outline"
+                size="icon"
+                className="border-2 border-primary/30 hover:border-primary transition-all"
+              >
+                <Maximize2 className="w-5 h-5" />
               </Button>
             </div>
 
-            {/* Spinning Wheel */}
-            <div className="w-full flex items-center justify-center" style={{ height: 'min(90vw, 80vh, 700px)' }}>
-              <SpinningWheel
-                ref={wheelRef}
-                sectors={SECTORS}
-                onSpinEnd={handleSpinEnd}
-              />
-            </div>
+            <Button
+              onClick={handleSpin}
+              disabled={isSpinning || cooldownTime > 0}
+              className={`w-full h-10 md:h-12 text-lg font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-105 transition-all neon-glow-purple ${!isSpinning && cooldownTime === 0 && 'animate-pulse-glow'}`}
+              size="lg"
+            >
+              {isSpinning ? "SPINNING..." : cooldownTime > 0 ? `WAIT ${cooldownTime}s` : "🎯 SPIN THE WHEEL"}
+            </Button>
+          </div>
+
+          {/* Spinning Wheel */}
+          <div className="flex-1 w-full flex items-center justify-center min-h-0">
+            <SpinningWheel
+              ref={wheelRef}
+              sectors={SECTORS}
+              onSpinEnd={handleSpinEnd}
+            />
           </div>
         </div>
-
-        {/* Footer */}
-        <footer className="text-center mt-8 md:mt-12 text-muted-foreground text-xs md:text-sm animate-fade-in">
-          <p>Press Enter or click SPIN to play • Good luck! 🍀</p>
-        </footer>
       </div>
     </div>
   );
