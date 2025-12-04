@@ -96,10 +96,20 @@ const Index = () => {
   const [winners, setWinners] = useState<Winner[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [cooldownTime, setCooldownTime] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const wheelRef = useRef<SpinningWheelRef>(null);
   const spinSoundRef = useRef<HTMLAudioElement | null>(null);
   const winSoundRef = useRef<HTMLAudioElement | null>(null);
   const tickSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Track fullscreen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   useEffect(() => {
     // Load winners from localStorage
@@ -365,7 +375,7 @@ const Index = () => {
             </div>
 
             {/* Spinning Wheel */}
-            <div className="w-full max-w-[500px] aspect-square">
+            <div className={`w-full aspect-square ${isFullscreen ? 'max-w-[75vh]' : 'max-w-[500px]'}`}>
               <SpinningWheel
                 ref={wheelRef}
                 sectors={SECTORS}
