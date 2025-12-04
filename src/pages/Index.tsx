@@ -324,8 +324,8 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-auto">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-4 md:mb-6 animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider">
+        <div className={`text-center animate-fade-in ${isFullscreen ? 'mb-2' : 'mb-4 md:mb-6'}`}>
+          <h1 className={`font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider ${isFullscreen ? 'text-3xl' : 'text-4xl md:text-6xl'}`}>
             GAMERS
           </h1>
         </div>
