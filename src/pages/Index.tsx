@@ -114,8 +114,7 @@ const Index = () => {
 
     // Create audio context for sounds
     let audioContext: AudioContext | null = null;
-    let spinOscillator: OscillatorNode | null = null;
-    let spinGain: GainNode | null = null;
+    let melodyInterval: NodeJS.Timeout | null = null;
     
     const getAudioContext = () => {
       if (!audioContext) {
@@ -124,47 +123,61 @@ const Index = () => {
       return audioContext;
     };
     
-    // Create continuous spin sound
-    const startSpinSound = () => {
+    // Fun carnival melody notes
+    const melodyNotes = [
+      392, 440, 494, 523, 587, 659, 698, 784, // G4 to G5
+      784, 698, 659, 587, 523, 494, 440, 392  // Back down
+    ];
+    let noteIndex = 0;
+    
+    const playNote = (freq: number, duration: number = 0.15) => {
       const ctx = getAudioContext();
-      spinOscillator = ctx.createOscillator();
-      spinGain = ctx.createGain();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
       
-      spinOscillator.connect(spinGain);
-      spinGain.connect(ctx.destination);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
       
-      spinOscillator.type = 'sawtooth';
-      spinOscillator.frequency.value = 80;
-      spinGain.gain.value = 0.15;
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
       
-      spinOscillator.start();
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    };
+    
+    // Start fun spinning melody
+    const startSpinSound = () => {
+      noteIndex = 0;
+      melodyInterval = setInterval(() => {
+        playNote(melodyNotes[noteIndex % melodyNotes.length], 0.12);
+        noteIndex++;
+      }, 120);
     };
     
     const stopSpinSound = () => {
-      if (spinGain) {
-        spinGain.gain.exponentialRampToValueAtTime(0.001, getAudioContext().currentTime + 0.5);
+      if (melodyInterval) {
+        clearInterval(melodyInterval);
+        melodyInterval = null;
       }
-      setTimeout(() => {
-        spinOscillator?.stop();
-        spinOscillator = null;
-        spinGain = null;
-      }, 500);
     };
     
-    // Create win sound (victory chime)
+    // Create win sound (victory fanfare)
     const createWinSound = () => {
       const ctx = getAudioContext();
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-      notes.forEach((freq, i) => {
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        oscillator.frequency.value = freq;
-        gainNode.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.15);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.5);
-        oscillator.start(ctx.currentTime + i * 0.15);
-        oscillator.stop(ctx.currentTime + i * 0.15 + 0.5);
+      const fanfare = [523, 659, 784, 1047, 1047, 784, 1047]; // C5, E5, G5, C6
+      fanfare.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
+        osc.start(ctx.currentTime + i * 0.12);
+        osc.stop(ctx.currentTime + i * 0.12 + 0.3);
       });
     };
     
@@ -298,70 +311,72 @@ const Index = () => {
   }, [playerName, isSpinning]);
 
   return (
-    <div className="h-screen bg-gradient-to-br from-background via-background to-primary/10 p-2 md:p-4 overflow-hidden flex flex-col">
-      {/* Header */}
-      <div className="text-center mb-2 md:mb-4 animate-fade-in flex-shrink-0">
-        <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider">
-          GAMERS
-        </h1>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-3 md:gap-4 min-h-0">
-        {/* Winners Leaderboard - Left Side */}
-        <div className="order-2 lg:order-1 w-full lg:w-[280px] flex-shrink-0 animate-fade-in">
-          <WinnersLeaderboard winners={winners} onReset={handleReset} />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-auto">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-4 md:mb-6 animate-fade-in">
+          <h1 className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider">
+            GAMERS
+          </h1>
         </div>
 
-        {/* Center: Wheel and Controls */}
-        <div className="order-1 lg:order-2 flex-1 flex flex-col items-center gap-2 md:gap-3 min-h-0">
-          {/* Controls */}
-          <div className="w-full max-w-md space-y-2 flex-shrink-0">
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="Enter your name..."
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSpin()}
-                className="flex-1 bg-background/50 backdrop-blur-sm border-2 border-primary/30 focus:border-primary text-base"
-                disabled={isSpinning}
-              />
+        {/* Main Content */}
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-center lg:items-start">
+          {/* Center: Wheel and Controls */}
+          <div className="flex-1 flex flex-col items-center gap-4 w-full order-1">
+            {/* Controls */}
+            <div className="w-full max-w-md space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Enter your name..."
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSpin()}
+                  className="flex-1 bg-background/50 backdrop-blur-sm border-2 border-primary/30 focus:border-primary text-base h-11"
+                  disabled={isSpinning}
+                />
+                <Button
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  variant="outline"
+                  size="icon"
+                  className="border-2 border-primary/30 hover:border-primary transition-all h-11 w-11"
+                >
+                  {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                </Button>
+                <Button
+                  onClick={toggleFullscreen}
+                  variant="outline"
+                  size="icon"
+                  className="border-2 border-primary/30 hover:border-primary transition-all h-11 w-11"
+                >
+                  <Maximize2 className="w-5 h-5" />
+                </Button>
+              </div>
+
               <Button
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                variant="outline"
-                size="icon"
-                className="border-2 border-primary/30 hover:border-primary transition-all"
+                onClick={handleSpin}
+                disabled={isSpinning || cooldownTime > 0}
+                className={`w-full h-12 text-lg font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-105 transition-all neon-glow-purple ${!isSpinning && cooldownTime === 0 && 'animate-pulse-glow'}`}
+                size="lg"
               >
-                {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-              </Button>
-              <Button
-                onClick={toggleFullscreen}
-                variant="outline"
-                size="icon"
-                className="border-2 border-primary/30 hover:border-primary transition-all"
-              >
-                <Maximize2 className="w-5 h-5" />
+                {isSpinning ? "SPINNING..." : cooldownTime > 0 ? `WAIT ${cooldownTime}s` : "🎯 SPIN THE WHEEL"}
               </Button>
             </div>
 
-            <Button
-              onClick={handleSpin}
-              disabled={isSpinning || cooldownTime > 0}
-              className={`w-full h-10 md:h-12 text-lg font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-105 transition-all neon-glow-purple ${!isSpinning && cooldownTime === 0 && 'animate-pulse-glow'}`}
-              size="lg"
-            >
-              {isSpinning ? "SPINNING..." : cooldownTime > 0 ? `WAIT ${cooldownTime}s` : "🎯 SPIN THE WHEEL"}
-            </Button>
+            {/* Spinning Wheel */}
+            <div className="w-full max-w-[500px] aspect-square">
+              <SpinningWheel
+                ref={wheelRef}
+                sectors={SECTORS}
+                onSpinEnd={handleSpinEnd}
+              />
+            </div>
           </div>
 
-          {/* Spinning Wheel */}
-          <div className="flex-1 w-full flex items-center justify-center min-h-0">
-            <SpinningWheel
-              ref={wheelRef}
-              sectors={SECTORS}
-              onSpinEnd={handleSpinEnd}
-            />
+          {/* Winners Leaderboard - Right Side */}
+          <div className="w-full lg:w-[280px] flex-shrink-0 animate-fade-in order-2">
+            <WinnersLeaderboard winners={winners} onReset={handleReset} />
           </div>
         </div>
       </div>
