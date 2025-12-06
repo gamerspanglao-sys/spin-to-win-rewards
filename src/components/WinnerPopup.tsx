@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { QRCodeSVG } from "qrcode.react";
 import confetti from "canvas-confetti";
 
 interface WinnerPopupProps {
@@ -13,7 +12,7 @@ interface WinnerPopupProps {
   winNumber?: number | null; // null for "See you tomorrow"
 }
 
-const FACEBOOK_URL = "https://www.facebook.com/gamerspanglao";
+
 
 export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor, winNumber }: WinnerPopupProps) => {
   const [showContent, setShowContent] = useState(false);
@@ -171,22 +170,23 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor, wi
               }`}
             >
               <div className="text-sm text-white/70 mb-3">Follow us on Facebook!</div>
-              <div 
-                className="inline-block p-3 rounded-xl"
+              <a 
+                href="https://www.facebook.com/gamerspanglao" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block p-4 rounded-xl bg-white hover:scale-105 transition-transform"
                 style={{
-                  background: 'white',
                   boxShadow: `0 0 30px ${prizeColor}44, 0 10px 30px rgba(0,0,0,0.3)`
                 }}
               >
-                <QRCodeSVG 
-                  value={FACEBOOK_URL}
-                  size={120}
-                  level="M"
-                  includeMargin={false}
-                  fgColor="#1a1a2e"
-                  bgColor="white"
-                />
-              </div>
+                <div className="w-[120px] h-[120px] flex items-center justify-center">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://www.facebook.com/gamerspanglao`}
+                    alt="Facebook QR Code"
+                    className="w-full h-full"
+                  />
+                </div>
+              </a>
               <div className="text-xs text-white/50 mt-2">@gamerspanglao</div>
             </div>
             
