@@ -9,6 +9,7 @@ export interface WheelSector {
 interface SpinningWheelProps {
   sectors: WheelSector[];
   onSpinEnd: (winnerIndex: number) => void;
+  onTick?: () => void;
 }
 
 export interface SpinningWheelRef {
@@ -32,11 +33,12 @@ const COLORS = [
 ];
 
 export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
-  ({ sectors, onSpinEnd }, ref) => {
+  ({ sectors, onSpinEnd, onTick }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const rotationRef = useRef(0);
     const isSpinningRef = useRef(false);
     const winnerIndexRef = useRef<number | null>(null);
+    const lastSectorRef = useRef<number>(-1);
     const highlightAnimationRef = useRef<number>(0);
 
     const drawWheel = (rotation: number) => {
@@ -308,6 +310,19 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
 
         rotationRef.current = startRotation + (targetRotation - startRotation) * easedProgress;
         drawWheel(rotationRef.current);
+        
+        // Calculate current sector for tick sound
+        const anglePerSector = (2 * Math.PI) / sectors.length;
+        const normalizedRotation = ((rotationRef.current % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        const pointerAngle = Math.PI / 2; // Top of wheel
+        const adjustedAngle = (pointerAngle - normalizedRotation + Math.PI * 2) % (Math.PI * 2);
+        const currentSector = Math.floor(adjustedAngle / anglePerSector) % sectors.length;
+        
+        // Play tick when crossing sector boundary
+        if (currentSector !== lastSectorRef.current && progress < 0.95) {
+          lastSectorRef.current = currentSector;
+          onTick?.();
+        }
 
         if (progress < 1) {
           requestAnimationFrame(animate);

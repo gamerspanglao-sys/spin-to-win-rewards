@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { SpinningWheel, SpinningWheelRef, WheelSector } from "@/components/SpinningWheel";
 import { WinnersLeaderboard, Winner } from "@/components/WinnersLeaderboard";
+import { WinnerPopup } from "@/components/WinnerPopup";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Volume2, VolumeX } from "lucide-react";
@@ -97,10 +98,12 @@ const Index = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [cooldownTime, setCooldownTime] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showWinnerPopup, setShowWinnerPopup] = useState(false);
+  const [lastWin, setLastWin] = useState<{ name: string; prize: string; color: string } | null>(null);
   const wheelRef = useRef<SpinningWheelRef>(null);
   const spinSoundRef = useRef<HTMLAudioElement | null>(null);
   const winSoundRef = useRef<HTMLAudioElement | null>(null);
-  const tickSoundRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Track fullscreen state
   useEffect(() => {
@@ -123,14 +126,11 @@ const Index = () => {
     }
 
     // Create audio context for sounds
-    let audioContext: AudioContext | null = null;
-    let melodyInterval: NodeJS.Timeout | null = null;
-    
     const getAudioContext = () => {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
-      return audioContext;
+      return audioContextRef.current;
     };
     
     // Fun carnival melody notes
@@ -139,6 +139,7 @@ const Index = () => {
       784, 698, 659, 587, 523, 494, 440, 392  // Back down
     ];
     let noteIndex = 0;
+    let melodyInterval: NodeJS.Timeout | null = null;
     
     const playNote = (freq: number, duration: number = 0.15) => {
       const ctx = getAudioContext();
@@ -198,6 +199,26 @@ const Index = () => {
     };
     (winSoundRef.current as any) = { play: () => createWinSound() };
   }, []);
+
+  // Tick sound for wheel crossing sectors
+  const playTickSound = useCallback(() => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    
+    const ctx = audioContextRef.current;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.type = 'triangle';
+    osc.frequency.value = 800 + Math.random() * 200; // Slight variation
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  }, [soundEnabled]);
   
   // Cooldown timer
   useEffect(() => {
@@ -283,10 +304,9 @@ const Index = () => {
       setWinners(updatedWinners);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWinners));
 
-      toast.success(`🎉 ${playerName} won: ${prize}!`, {
-        duration: 5000,
-        className: "text-lg font-bold",
-      });
+      // Show winner popup
+      setLastWin({ name: playerName, prize, color: sectorColor });
+      setShowWinnerPopup(true);
 
       setIsSpinning(false);
       setCooldownTime(60); // 60 second cooldown
@@ -378,6 +398,7 @@ const Index = () => {
                 ref={wheelRef}
                 sectors={SECTORS}
                 onSpinEnd={handleSpinEnd}
+                onTick={playTickSound}
               />
             </div>
           </div>
@@ -388,6 +409,17 @@ const Index = () => {
           </div>
         </div>
       </div>
+      
+      {/* Winner Popup */}
+      {lastWin && (
+        <WinnerPopup
+          isOpen={showWinnerPopup}
+          onClose={() => setShowWinnerPopup(false)}
+          playerName={lastWin.name}
+          prize={lastWin.prize}
+          prizeColor={lastWin.color}
+        />
+      )}
     </div>
   );
 };
