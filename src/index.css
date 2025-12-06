@@ -112,10 +112,7 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     background: radial-gradient(ellipse at top, hsl(220 25% 12%), hsl(220 25% 8%));
     min-height: 100vh;
-  }
-  
-  #root {
-    min-height: 100vh;
+    overflow: hidden;
   }
 }
 
