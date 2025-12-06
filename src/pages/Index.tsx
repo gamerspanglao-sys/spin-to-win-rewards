@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { SpinningWheel, SpinningWheelRef, WheelSector } from "@/components/SpinningWheel";
 import { WinnersLeaderboard, Winner } from "@/components/WinnersLeaderboard";
 import { WinnerPopup } from "@/components/WinnerPopup";
-import { PrizeRedemption, RedeemablePrize } from "@/components/PrizeRedemption";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Volume2, VolumeX } from "lucide-react";
@@ -30,8 +29,6 @@ const PRIZES: Prize[] = [
   { label: "Cola Glass 🥤", weight: 10 },
 ];
 
-const SEE_TOMORROW_LABEL = "See you tomorrow ❤️";
-
 const COLORS = [
   '#A855F7', '#EC4899', '#06B6D4', '#3B82F6', 
   '#10B981', '#F59E0B', '#F97316', '#EF4444', 
@@ -41,8 +38,9 @@ const COLORS = [
 // Generate sectors from prizes with smart shuffling
 const generateSectors = (): WheelSector[] => {
   const sectors: WheelSector[] = [];
+  const seeTomorrowLabel = "See you tomorrow ❤️";
   
-  PRIZES.forEach((prize) => {
+  PRIZES.forEach((prize, prizeIndex) => {
     const repeat = prize.repeat || 1;
     for (let i = 0; i < repeat; i++) {
       sectors.push({
@@ -55,8 +53,8 @@ const generateSectors = (): WheelSector[] => {
   
   // Shuffle avoiding adjacent "See you tomorrow" sectors
   const shuffled: WheelSector[] = [];
-  const seeTomorrow = sectors.filter(s => s.label === SEE_TOMORROW_LABEL);
-  const others = sectors.filter(s => s.label !== SEE_TOMORROW_LABEL);
+  const seeTomorrow = sectors.filter(s => s.label === seeTomorrowLabel);
+  const others = sectors.filter(s => s.label !== seeTomorrowLabel);
   
   // Shuffle both arrays
   const shuffleArray = <T,>(arr: T[]): T[] => {
@@ -92,19 +90,16 @@ const generateSectors = (): WheelSector[] => {
 
 const SECTORS = generateSectors();
 const STORAGE_KEY = 'prize-wheel-winners';
-const PRIZES_STORAGE_KEY = 'prize-wheel-redeemable';
-const WIN_COUNTER_KEY = 'prize-wheel-win-counter';
 
 const Index = () => {
   const [playerName, setPlayerName] = useState("");
   const [isSpinning, setIsSpinning] = useState(false);
   const [winners, setWinners] = useState<Winner[]>([]);
-  const [redeemablePrizes, setRedeemablePrizes] = useState<RedeemablePrize[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [cooldownTime, setCooldownTime] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
-  const [lastWin, setLastWin] = useState<{ name: string; prize: string; color: string; winNumber: number | null } | null>(null);
+  const [lastWin, setLastWin] = useState<{ name: string; prize: string; color: string } | null>(null);
   const wheelRef = useRef<SpinningWheelRef>(null);
   const spinSoundRef = useRef<HTMLAudioElement | null>(null);
   const winSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -127,16 +122,6 @@ const Index = () => {
         setWinners(JSON.parse(saved));
       } catch (e) {
         console.error('Failed to load winners', e);
-      }
-    }
-
-    // Load redeemable prizes
-    const savedPrizes = localStorage.getItem(PRIZES_STORAGE_KEY);
-    if (savedPrizes) {
-      try {
-        setRedeemablePrizes(JSON.parse(savedPrizes));
-      } catch (e) {
-        console.error('Failed to load prizes', e);
       }
     }
 
@@ -245,14 +230,6 @@ const Index = () => {
     }
   }, [cooldownTime]);
 
-  // Get next win number (persisted)
-  const getNextWinNumber = (): number => {
-    const current = parseInt(localStorage.getItem(WIN_COUNTER_KEY) || '0', 10);
-    const next = current + 1;
-    localStorage.setItem(WIN_COUNTER_KEY, next.toString());
-    return next;
-  };
-
   const handleSpin = () => {
     const name = playerName.trim();
     if (!name) {
@@ -286,7 +263,6 @@ const Index = () => {
     setTimeout(() => {
       const prize = SECTORS[winnerIndex].label;
       const sectorColor = SECTORS[winnerIndex].color;
-      const isRedeemable = prize !== SEE_TOMORROW_LABEL;
       
       // Play win sound
       if (soundEnabled && winSoundRef.current) {
@@ -318,25 +294,6 @@ const Index = () => {
         ]
       });
 
-      // Generate win number only for redeemable prizes
-      let winNumber: number | null = null;
-      if (isRedeemable) {
-        winNumber = getNextWinNumber();
-        
-        // Add to redeemable prizes
-        const newPrize: RedeemablePrize = {
-          id: Date.now(),
-          winNumber,
-          playerName,
-          prize,
-          timestamp: Date.now(),
-          redeemed: false
-        };
-        const updatedPrizes = [newPrize, ...redeemablePrizes];
-        setRedeemablePrizes(updatedPrizes);
-        localStorage.setItem(PRIZES_STORAGE_KEY, JSON.stringify(updatedPrizes));
-      }
-
       const newWinner: Winner = {
         name: playerName,
         prize,
@@ -348,7 +305,7 @@ const Index = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWinners));
 
       // Show winner popup
-      setLastWin({ name: playerName, prize, color: sectorColor, winNumber });
+      setLastWin({ name: playerName, prize, color: sectorColor });
       setShowWinnerPopup(true);
 
       setIsSpinning(false);
@@ -360,24 +317,6 @@ const Index = () => {
     setWinners([]);
     localStorage.removeItem(STORAGE_KEY);
     toast.success("Leaderboard reset!");
-  };
-
-  const handleRedeemPrize = (id: number) => {
-    const updated = redeemablePrizes.map(p => 
-      p.id === id ? { ...p, redeemed: true, redeemedAt: Date.now() } : p
-    );
-    setRedeemablePrizes(updated);
-    localStorage.setItem(PRIZES_STORAGE_KEY, JSON.stringify(updated));
-    toast.success("Prize marked as redeemed!");
-  };
-
-  const handleUnredeemPrize = (id: number) => {
-    const updated = redeemablePrizes.map(p => 
-      p.id === id ? { ...p, redeemed: false, redeemedAt: undefined } : p
-    );
-    setRedeemablePrizes(updated);
-    localStorage.setItem(PRIZES_STORAGE_KEY, JSON.stringify(updated));
-    toast.success("Prize unmarked!");
   };
 
   const toggleFullscreen = () => {
@@ -441,11 +380,6 @@ const Index = () => {
                 >
                   <Maximize2 className="w-5 h-5" />
                 </Button>
-                <PrizeRedemption 
-                  prizes={redeemablePrizes}
-                  onRedeem={handleRedeemPrize}
-                  onUnredeem={handleUnredeemPrize}
-                />
               </div>
 
               <Button
@@ -484,7 +418,6 @@ const Index = () => {
           playerName={lastWin.name}
           prize={lastWin.prize}
           prizeColor={lastWin.color}
-          winNumber={lastWin.winNumber}
         />
       )}
     </div>
