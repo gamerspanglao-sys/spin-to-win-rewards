@@ -20,18 +20,29 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
   const [showContent, setShowContent] = useState(false);
   const [step, setStep] = useState<'subscribe' | 'prize' | 'voucher'>('subscribe');
   const [voucher, setVoucher] = useState<Voucher | null>(null);
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     if (isOpen) {
       setStep('subscribe');
       setVoucher(null);
+      setCountdown(5);
       setTimeout(() => setShowContent(true), 100);
     } else {
       setShowContent(false);
       setStep('subscribe');
       setVoucher(null);
+      setCountdown(5);
     }
   }, [isOpen]);
+
+  // Countdown timer for subscribe button
+  useEffect(() => {
+    if (isOpen && step === 'subscribe' && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, step, countdown]);
 
   const handleSubscribed = () => {
     setStep('prize');
@@ -130,12 +141,13 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
               
               <Button
                 onClick={handleSubscribed}
-                className="w-full px-6 py-3 text-lg font-bold rounded-full transition-all hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-500"
+                disabled={countdown > 0}
+                className="w-full px-6 py-3 text-lg font-bold rounded-full transition-all hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
-                  boxShadow: '0 0 20px #10B98166'
+                  boxShadow: countdown > 0 ? 'none' : '0 0 20px #10B98166'
                 }}
               >
-                ✅ I followed! Show my prize
+                {countdown > 0 ? `⏳ Wait ${countdown}s...` : '✅ I followed! Show my prize'}
               </Button>
             </div>
           ) : step === 'prize' ? (
