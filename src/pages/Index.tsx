@@ -275,7 +275,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-auto">
       <div className="max-w-6xl mx-auto">
         {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-center lg:items-start">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-center lg:items-start justify-center">
           {/* Center: Wheel and Controls */}
           <div className="flex-1 flex flex-col items-center gap-4 w-full order-1">
             {/* Controls */}
@@ -339,7 +339,7 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Winners Leaderboard - Right Side */}
+          {/* Winners Leaderboard & Voucher Redemption - Right Side on desktop, bottom on mobile */}
           <div className="w-full lg:w-[280px] flex-shrink-0 animate-fade-in order-2 space-y-4">
             <WinnersLeaderboard winners={winners} onReset={handleReset} />
             <div className="p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-border">
