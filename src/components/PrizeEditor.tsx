@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/sheet";
 import { Settings, Plus, Trash2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { VoucherRedemption } from "./VoucherRedemption";
+import { Separator } from "@/components/ui/separator";
 
 export interface Prize {
   label: string;
@@ -224,6 +226,12 @@ export const PrizeEditor = ({ prizes, onPrizesChange, defaultPrizes }: PrizeEdit
           >
             Save Changes
           </Button>
+
+          {/* Separator */}
+          <Separator className="my-4" />
+
+          {/* Voucher Redemption Section */}
+          <VoucherRedemption />
         </div>
       </SheetContent>
     </Sheet>

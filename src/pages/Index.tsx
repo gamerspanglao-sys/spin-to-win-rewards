@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Maximize2, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import { cleanExpiredVouchers } from "@/lib/vouchers";
 
 // Default prize configuration
 const DEFAULT_PRIZES: Prize[] = [
@@ -127,6 +128,9 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
+    // Clean expired vouchers on app load
+    cleanExpiredVouchers();
+
     // Load winners from localStorage
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
