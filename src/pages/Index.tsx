@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { SpinningWheel, SpinningWheelRef, WheelSector } from "@/components/SpinningWheel";
 import { WinnersLeaderboard, Winner } from "@/components/WinnersLeaderboard";
 import { WinnerPopup } from "@/components/WinnerPopup";
@@ -9,6 +9,7 @@ import { Maximize2, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { cleanExpiredVouchers } from "@/lib/vouchers";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 // Default prize configuration
 const DEFAULT_PRIZES: Prize[] = [
@@ -105,10 +106,9 @@ const Index = () => {
   const [lastWin, setLastWin] = useState<{ name: string; prize: string; color: string } | null>(null);
   const [prizes, setPrizes] = useState<Prize[]>(loadPrizes);
   const wheelRef = useRef<SpinningWheelRef>(null);
-  const spinSoundRef = useRef<{ play: () => void; stop: () => void } | null>(null);
-  const winSoundRef = useRef<{ play: () => void } | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const melodyIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use the game sounds hook
+  const { startSpinSound, stopSpinSound, playWinSound, playTickSound } = useGameSounds();
 
   // Generate sectors from current prizes
   const sectors = useMemo(() => generateSectors(prizes), [prizes]);
@@ -141,115 +141,14 @@ const Index = () => {
         console.error('Failed to load winners', e);
       }
     }
-
-    // Create audio context for sounds
-    const getAudioContext = () => {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-      return audioContextRef.current;
-    };
-    
-    // Fun carnival melody notes
-    const melodyNotes = [
-      392, 440, 494, 523, 587, 659, 698, 784, // G4 to G5
-      784, 698, 659, 587, 523, 494, 440, 392  // Back down
-    ];
-    let noteIndex = 0;
-    
-    const playNote = (freq: number, duration: number = 0.15) => {
-      const ctx = getAudioContext();
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
-      
-      osc.start();
-      osc.stop(ctx.currentTime + duration);
-    };
-    
-    // Start fun spinning melody
-    const startSpinSound = () => {
-      // Stop any existing melody first
-      if (melodyIntervalRef.current) {
-        clearInterval(melodyIntervalRef.current);
-      }
-      noteIndex = 0;
-      melodyIntervalRef.current = setInterval(() => {
-        playNote(melodyNotes[noteIndex % melodyNotes.length], 0.12);
-        noteIndex++;
-      }, 120);
-    };
-    
-    const stopSpinSound = () => {
-      if (melodyIntervalRef.current) {
-        clearInterval(melodyIntervalRef.current);
-        melodyIntervalRef.current = null;
-      }
-    };
-    
-    // Create win sound (victory fanfare)
-    const createWinSound = () => {
-      const ctx = getAudioContext();
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-      const fanfare = [523, 659, 784, 1047, 1047, 784, 1047]; // C5, E5, G5, C6
-      fanfare.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'square';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.12);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
-        osc.start(ctx.currentTime + i * 0.12);
-        osc.stop(ctx.currentTime + i * 0.12 + 0.3);
-      });
-    };
-    
-    // Store functions
-    spinSoundRef.current = { 
-      play: startSpinSound,
-      stop: stopSpinSound
-    };
-    winSoundRef.current = { play: createWinSound };
-
-    // Cleanup on unmount
-    return () => {
-      stopSpinSound();
-    };
   }, []);
 
-  // Tick sound for wheel crossing sectors
-  const playTickSound = useCallback(() => {
-    if (!soundEnabled || !audioContextRef.current) return;
-    
-    const ctx = audioContextRef.current;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    osc.type = 'triangle';
-    osc.frequency.value = 800 + Math.random() * 200; // Slight variation
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-    
-    osc.start();
-    osc.stop(ctx.currentTime + 0.05);
-  }, [soundEnabled]);
+  // Tick sound wrapper that respects sound toggle
+  const handleTickSound = () => {
+    if (soundEnabled) {
+      playTickSound();
+    }
+  };
   
   // Cooldown timer
   useEffect(() => {
@@ -277,8 +176,8 @@ const Index = () => {
 
     setIsSpinning(true);
     
-    if (soundEnabled && spinSoundRef.current) {
-      spinSoundRef.current.play();
+    if (soundEnabled) {
+      startSpinSound();
     }
 
     wheelRef.current?.spin();
@@ -286,8 +185,8 @@ const Index = () => {
 
   const handleSpinEnd = (winnerIndex: number) => {
     // Stop spin sound
-    if (soundEnabled && spinSoundRef.current) {
-      spinSoundRef.current.stop();
+    if (soundEnabled) {
+      stopSpinSound();
     }
     
     // Dramatic pause before showing result
@@ -296,8 +195,8 @@ const Index = () => {
       const sectorColor = sectors[winnerIndex].color;
       
       // Play win sound
-      if (soundEnabled && winSoundRef.current) {
-        winSoundRef.current.play();
+      if (soundEnabled) {
+        playWinSound();
       }
 
       // Confetti effect matching sector color
@@ -434,7 +333,7 @@ const Index = () => {
                 ref={wheelRef}
                 sectors={sectors}
                 onSpinEnd={handleSpinEnd}
-                onTick={playTickSound}
+                onTick={handleTickSound}
               />
             </div>
           </div>
