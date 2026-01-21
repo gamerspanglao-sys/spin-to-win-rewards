@@ -6,7 +6,8 @@ import { PrizeEditor, Prize } from "@/components/PrizeEditor";
 import { VoucherRedemption } from "@/components/VoucherRedemption";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Maximize2, Volume2, VolumeX } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Maximize2, Volume2, VolumeX, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { cleanExpiredVouchers } from "@/lib/vouchers";
@@ -273,15 +274,36 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-y-auto">
-      {/* Fullscreen button - fixed in corner */}
-      <Button
-        onClick={toggleFullscreen}
-        variant="outline"
-        size="icon"
-        className="fixed bottom-4 right-4 z-50 border-2 border-primary/30 hover:border-primary transition-all h-11 w-11 bg-background/80 backdrop-blur-sm"
-      >
-        <Maximize2 className="w-5 h-5" />
-      </Button>
+      {/* Fixed buttons in corner */}
+      <div className="fixed bottom-4 right-4 z-50 flex gap-2">
+        {/* Voucher Redemption Button */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="border-2 border-primary/30 hover:border-primary transition-all h-11 w-11 bg-background/80 backdrop-blur-sm"
+            >
+              <Ticket className="w-5 h-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[320px] sm:w-[400px]">
+            <div className="pt-6">
+              <VoucherRedemption />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Fullscreen button */}
+        <Button
+          onClick={toggleFullscreen}
+          variant="outline"
+          size="icon"
+          className="border-2 border-primary/30 hover:border-primary transition-all h-11 w-11 bg-background/80 backdrop-blur-sm"
+        >
+          <Maximize2 className="w-5 h-5" />
+        </Button>
+      </div>
 
       <div className="max-w-6xl mx-auto pb-16">
         {/* Main Content */}
