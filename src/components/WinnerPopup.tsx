@@ -3,6 +3,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
 import confetti from "canvas-confetti";
+import { VoucherDisplay } from "./VoucherDisplay";
+import { createVoucher, saveVoucher, shouldGenerateVoucher, Voucher } from "@/lib/vouchers";
 
 interface WinnerPopupProps {
   isOpen: boolean;
@@ -16,15 +18,18 @@ const FACEBOOK_URL = "https://www.facebook.com/gamerspanglao";
 
 export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: WinnerPopupProps) => {
   const [showContent, setShowContent] = useState(false);
-  const [step, setStep] = useState<'subscribe' | 'prize'>('subscribe');
+  const [step, setStep] = useState<'subscribe' | 'prize' | 'voucher'>('subscribe');
+  const [voucher, setVoucher] = useState<Voucher | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setStep('subscribe');
+      setVoucher(null);
       setTimeout(() => setShowContent(true), 100);
     } else {
       setShowContent(false);
       setStep('subscribe');
+      setVoucher(null);
     }
   }, [isOpen]);
 
@@ -45,6 +50,21 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
     setTimeout(fireConfetti, 300);
     setTimeout(fireConfetti, 600);
   };
+
+  const handleShowVoucher = () => {
+    // Generate and save voucher
+    const newVoucher = createVoucher(playerName, prize, prizeColor);
+    saveVoucher(newVoucher);
+    setVoucher(newVoucher);
+    setStep('voucher');
+  };
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  // Check if this prize should get a voucher
+  const hasVoucher = shouldGenerateVoucher(prize);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -118,7 +138,7 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
                 ✅ I followed! Show my prize
               </Button>
             </div>
-          ) : (
+          ) : step === 'prize' ? (
             /* Step 2: Show Prize */
             <div className="text-center space-y-4 relative z-10 pt-4">
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
@@ -163,16 +183,21 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
               </div>
               
               <Button
-                onClick={onClose}
+                onClick={hasVoucher ? handleShowVoucher : handleClose}
                 className="mt-4 px-8 py-3 text-lg font-bold rounded-full transition-all hover:scale-105"
                 style={{
                   background: `linear-gradient(135deg, ${prizeColor}, ${prizeColor}cc)`,
                   boxShadow: `0 0 20px ${prizeColor}66`
                 }}
               >
-                AWESOME! 🎯
+                {hasVoucher ? '🎫 GET VOUCHER' : 'AWESOME! 🎯'}
               </Button>
             </div>
+          ) : (
+            /* Step 3: Voucher Display */
+            voucher && (
+              <VoucherDisplay voucher={voucher} onClose={handleClose} />
+            )
           )}
         </div>
       </DialogContent>
