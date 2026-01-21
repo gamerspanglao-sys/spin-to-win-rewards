@@ -108,6 +108,7 @@ const Index = () => {
   const [lastWin, setLastWin] = useState<{ name: string; prize: string; color: string } | null>(null);
   const [prizes, setPrizes] = useState<Prize[]>(loadPrizes);
   const wheelRef = useRef<SpinningWheelRef>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Use the game sounds hook
   const { startSpinSound, stopSpinSound, playWinSound, playTickSound } = useGameSounds();
@@ -124,10 +125,14 @@ const Index = () => {
   // Track fullscreen state
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      setIsFullscreen(!!document.fullscreenElement || !!(document as any).webkitFullscreenElement);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -251,13 +256,27 @@ const Index = () => {
     toast.success("Leaderboard reset!");
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {
-        toast.error("Fullscreen not supported");
-      });
-    } else {
-      document.exitFullscreen();
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        // Use the container element for fullscreen
+        const element = containerRef.current || document.documentElement;
+        if (element.requestFullscreen) {
+          await element.requestFullscreen();
+        } else if ((element as any).webkitRequestFullscreen) {
+          // Safari support
+          await (element as any).webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          // Safari support
+          await (document as any).webkitExitFullscreen();
+        }
+      }
+    } catch (error) {
+      toast.error("Fullscreen not supported");
     }
   };
 
@@ -273,7 +292,10 @@ const Index = () => {
   }, [playerName, isSpinning]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-y-auto">
+    <div 
+      ref={containerRef}
+      className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-y-auto"
+    >
       {/* Fixed buttons in corner */}
       <div className="fixed bottom-4 right-4 z-50 flex gap-2">
         {/* Settings/PrizeEditor button */}
