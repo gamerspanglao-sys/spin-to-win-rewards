@@ -105,9 +105,10 @@ const Index = () => {
   const [lastWin, setLastWin] = useState<{ name: string; prize: string; color: string } | null>(null);
   const [prizes, setPrizes] = useState<Prize[]>(loadPrizes);
   const wheelRef = useRef<SpinningWheelRef>(null);
-  const spinSoundRef = useRef<HTMLAudioElement | null>(null);
-  const winSoundRef = useRef<HTMLAudioElement | null>(null);
+  const spinSoundRef = useRef<{ play: () => void; stop: () => void } | null>(null);
+  const winSoundRef = useRef<{ play: () => void } | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const melodyIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Generate sectors from current prizes
   const sectors = useMemo(() => generateSectors(prizes), [prizes]);
@@ -155,10 +156,12 @@ const Index = () => {
       784, 698, 659, 587, 523, 494, 440, 392  // Back down
     ];
     let noteIndex = 0;
-    let melodyInterval: NodeJS.Timeout | null = null;
     
     const playNote = (freq: number, duration: number = 0.15) => {
       const ctx = getAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       
@@ -176,23 +179,30 @@ const Index = () => {
     
     // Start fun spinning melody
     const startSpinSound = () => {
+      // Stop any existing melody first
+      if (melodyIntervalRef.current) {
+        clearInterval(melodyIntervalRef.current);
+      }
       noteIndex = 0;
-      melodyInterval = setInterval(() => {
+      melodyIntervalRef.current = setInterval(() => {
         playNote(melodyNotes[noteIndex % melodyNotes.length], 0.12);
         noteIndex++;
       }, 120);
     };
     
     const stopSpinSound = () => {
-      if (melodyInterval) {
-        clearInterval(melodyInterval);
-        melodyInterval = null;
+      if (melodyIntervalRef.current) {
+        clearInterval(melodyIntervalRef.current);
+        melodyIntervalRef.current = null;
       }
     };
     
     // Create win sound (victory fanfare)
     const createWinSound = () => {
       const ctx = getAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
       const fanfare = [523, 659, 784, 1047, 1047, 784, 1047]; // C5, E5, G5, C6
       fanfare.forEach((freq, i) => {
         const osc = ctx.createOscillator();
@@ -209,11 +219,16 @@ const Index = () => {
     };
     
     // Store functions
-    (spinSoundRef.current as any) = { 
-      play: () => startSpinSound(),
-      stop: () => stopSpinSound()
+    spinSoundRef.current = { 
+      play: startSpinSound,
+      stop: stopSpinSound
     };
-    (winSoundRef.current as any) = { play: () => createWinSound() };
+    winSoundRef.current = { play: createWinSound };
+
+    // Cleanup on unmount
+    return () => {
+      stopSpinSound();
+    };
   }, []);
 
   // Tick sound for wheel crossing sectors
@@ -263,7 +278,7 @@ const Index = () => {
     setIsSpinning(true);
     
     if (soundEnabled && spinSoundRef.current) {
-      (spinSoundRef.current as any).play();
+      spinSoundRef.current.play();
     }
 
     wheelRef.current?.spin();
@@ -272,7 +287,7 @@ const Index = () => {
   const handleSpinEnd = (winnerIndex: number) => {
     // Stop spin sound
     if (soundEnabled && spinSoundRef.current) {
-      (spinSoundRef.current as any).stop?.();
+      spinSoundRef.current.stop();
     }
     
     // Dramatic pause before showing result
@@ -282,7 +297,7 @@ const Index = () => {
       
       // Play win sound
       if (soundEnabled && winSoundRef.current) {
-        (winSoundRef.current as any).play();
+        winSoundRef.current.play();
       }
 
       // Confetti effect matching sector color
