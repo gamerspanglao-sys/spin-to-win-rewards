@@ -1,51 +1,43 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { SpinningWheel, SpinningWheelRef, WheelSector } from "@/components/SpinningWheel";
 import { WinnersLeaderboard, Winner } from "@/components/WinnersLeaderboard";
 import { WinnerPopup } from "@/components/WinnerPopup";
+import { PrizeEditor, Prize } from "@/components/PrizeEditor";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 
-// Prize configuration with weights
-interface Prize {
-  label: string;
-  weight: number;
-  repeat?: number;
-}
-
-const PRIZES: Prize[] = [
-  { label: "See you tomorrow ❤️", weight: 46.95, repeat: 3 },
-  { label: "FREE Billiard Game", weight: 20, repeat: 2 },
-  { label: "30 min Karaoke", weight: 3 },
-  { label: "30 min PS5", weight: 5 },
-  { label: "1 hour PS5", weight: 3 },
-  { label: "VR 1 Game", weight: 5 },
-  { label: "Red Horse Beer", weight: 2 },
-  { label: "Beer Tower", weight: 0.05 },
-  { label: "Tequila Shot 🥃", weight: 2 },
-  { label: "Rum Coke 🍹", weight: 2 },
-  { label: "Cola Glass 🥤", weight: 10 },
+// Default prize configuration
+const DEFAULT_PRIZES: Prize[] = [
+  { label: "See you tomorrow ❤️", weight: 46.95, color: '#A855F7', repeat: 3 },
+  { label: "FREE Billiard Game", weight: 20, color: '#EC4899', repeat: 2 },
+  { label: "30 min Karaoke", weight: 3, color: '#06B6D4' },
+  { label: "30 min PS5", weight: 5, color: '#3B82F6' },
+  { label: "1 hour PS5", weight: 3, color: '#10B981' },
+  { label: "VR 1 Game", weight: 5, color: '#F59E0B' },
+  { label: "Red Horse Beer", weight: 2, color: '#F97316' },
+  { label: "Beer Tower", weight: 0.05, color: '#EF4444' },
+  { label: "Tequila Shot 🥃", weight: 2, color: '#8B5CF6' },
+  { label: "Rum Coke 🍹", weight: 2, color: '#14B8A6' },
+  { label: "Cola Glass 🥤", weight: 10, color: '#F43F5E' },
 ];
 
-const COLORS = [
-  '#A855F7', '#EC4899', '#06B6D4', '#3B82F6', 
-  '#10B981', '#F59E0B', '#F97316', '#EF4444', 
-  '#8B5CF6', '#14B8A6', '#F43F5E', '#84CC16'
-];
+const STORAGE_KEY = 'prize-wheel-winners';
+const PRIZES_STORAGE_KEY = 'prize-wheel-prizes';
 
 // Generate sectors from prizes with smart shuffling
-const generateSectors = (): WheelSector[] => {
+const generateSectors = (prizes: Prize[]): WheelSector[] => {
   const sectors: WheelSector[] = [];
   const seeTomorrowLabel = "See you tomorrow ❤️";
   
-  PRIZES.forEach((prize, prizeIndex) => {
+  prizes.forEach((prize) => {
     const repeat = prize.repeat || 1;
     for (let i = 0; i < repeat; i++) {
       sectors.push({
         label: prize.label,
-        color: COLORS[sectors.length % COLORS.length],
+        color: prize.color,
         weight: prize.weight
       });
     }
@@ -88,8 +80,18 @@ const generateSectors = (): WheelSector[] => {
   return shuffled;
 };
 
-const SECTORS = generateSectors();
-const STORAGE_KEY = 'prize-wheel-winners';
+// Load prizes from localStorage
+const loadPrizes = (): Prize[] => {
+  try {
+    const saved = localStorage.getItem(PRIZES_STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Failed to load prizes', e);
+  }
+  return DEFAULT_PRIZES;
+};
 
 const Index = () => {
   const [playerName, setPlayerName] = useState("");
@@ -100,10 +102,20 @@ const Index = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
   const [lastWin, setLastWin] = useState<{ name: string; prize: string; color: string } | null>(null);
+  const [prizes, setPrizes] = useState<Prize[]>(loadPrizes);
   const wheelRef = useRef<SpinningWheelRef>(null);
   const spinSoundRef = useRef<HTMLAudioElement | null>(null);
   const winSoundRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Generate sectors from current prizes
+  const sectors = useMemo(() => generateSectors(prizes), [prizes]);
+
+  // Handle prizes change
+  const handlePrizesChange = (newPrizes: Prize[]) => {
+    setPrizes(newPrizes);
+    localStorage.setItem(PRIZES_STORAGE_KEY, JSON.stringify(newPrizes));
+  };
 
   // Track fullscreen state
   useEffect(() => {
@@ -261,8 +273,8 @@ const Index = () => {
     
     // Dramatic pause before showing result
     setTimeout(() => {
-      const prize = SECTORS[winnerIndex].label;
-      const sectorColor = SECTORS[winnerIndex].color;
+      const prize = sectors[winnerIndex].label;
+      const sectorColor = sectors[winnerIndex].color;
       
       // Play win sound
       if (soundEnabled && winSoundRef.current) {
@@ -380,6 +392,11 @@ const Index = () => {
                 >
                   <Maximize2 className="w-5 h-5" />
                 </Button>
+                <PrizeEditor
+                  prizes={prizes}
+                  onPrizesChange={handlePrizesChange}
+                  defaultPrizes={DEFAULT_PRIZES}
+                />
               </div>
 
               <Button
@@ -396,7 +413,7 @@ const Index = () => {
             <div className={`w-full aspect-square ${isFullscreen ? 'max-w-[75vh]' : 'max-w-[500px]'}`}>
               <SpinningWheel
                 ref={wheelRef}
-                sectors={SECTORS}
+                sectors={sectors}
                 onSpinEnd={handleSpinEnd}
                 onTick={playTickSound}
               />
