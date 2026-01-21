@@ -84,11 +84,11 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
               </div>
               
               <h2 className="text-2xl font-bold text-white/90 tracking-wide pt-4">
-                ВЫ ВЫИГРАЛИ!
+                YOU WON!
               </h2>
               
               <p className="text-white/80 text-lg">
-                Подпишитесь на нашу группу,<br/>чтобы увидеть приз!
+                Follow our page<br/>to see your prize!
               </p>
               
               {/* QR Code */}
@@ -105,37 +105,18 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
               
               <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
                 <span>📱</span>
-                <span>Сканируйте QR или нажмите кнопку</span>
+                <span>Scan the QR code to follow us</span>
               </div>
               
-              <div className="space-y-2">
-                <a 
-                  href={FACEBOOK_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block w-full"
-                >
-                  <Button
-                    className="w-full px-6 py-3 text-lg font-bold rounded-full transition-all hover:scale-105"
-                    style={{
-                      background: '#1877F2',
-                      boxShadow: '0 0 20px #1877F266'
-                    }}
-                  >
-                    📘 Открыть Facebook
-                  </Button>
-                </a>
-                
-                <Button
-                  onClick={handleSubscribed}
-                  className="w-full px-6 py-3 text-lg font-bold rounded-full transition-all hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-500"
-                  style={{
-                    boxShadow: '0 0 20px #10B98166'
-                  }}
-                >
-                  ✅ Я подписался! Показать приз
-                </Button>
-              </div>
+              <Button
+                onClick={handleSubscribed}
+                className="w-full px-6 py-3 text-lg font-bold rounded-full transition-all hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-500"
+                style={{
+                  boxShadow: '0 0 20px #10B98166'
+                }}
+              >
+                ✅ I followed! Show my prize
+              </Button>
             </div>
           ) : (
             /* Step 2: Show Prize */
@@ -145,7 +126,7 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
               </div>
               
               <h2 className="text-2xl font-bold text-white/90 tracking-wide">
-                ПОЗДРАВЛЯЕМ!
+                CONGRATULATIONS!
               </h2>
               
               <div 
@@ -159,7 +140,7 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
               </div>
               
               <div className="text-lg text-white/80">
-                Вы выиграли
+                You won
               </div>
               
               <div 
@@ -189,7 +170,7 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
                   boxShadow: `0 0 20px ${prizeColor}66`
                 }}
               >
-                СУПЕР! 🎯
+                AWESOME! 🎯
               </Button>
             </div>
           )}
