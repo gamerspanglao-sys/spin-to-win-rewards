@@ -3,6 +3,7 @@ import { SpinningWheel, SpinningWheelRef, WheelSector } from "@/components/Spinn
 import { WinnersLeaderboard, Winner } from "@/components/WinnersLeaderboard";
 import { WinnerPopup } from "@/components/WinnerPopup";
 import { PrizeEditor, Prize } from "@/components/PrizeEditor";
+import { VoucherRedemption } from "@/components/VoucherRedemption";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Volume2, VolumeX } from "lucide-react";
@@ -339,8 +340,11 @@ const Index = () => {
           </div>
 
           {/* Winners Leaderboard - Right Side */}
-          <div className="w-full lg:w-[280px] flex-shrink-0 animate-fade-in order-2">
+          <div className="w-full lg:w-[280px] flex-shrink-0 animate-fade-in order-2 space-y-4">
             <WinnersLeaderboard winners={winners} onReset={handleReset} />
+            <div className="p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-border">
+              <VoucherRedemption />
+            </div>
           </div>
         </div>
       </div>

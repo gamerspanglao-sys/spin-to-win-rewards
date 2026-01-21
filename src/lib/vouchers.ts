@@ -20,10 +20,10 @@ export interface Voucher {
   redeemedAt?: number;
 }
 
-// Generate a unique 6-character code
+// Generate a unique 4-character code
 export const generateVoucherCode = (): string => {
   let code = '';
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 4; i++) {
     code += VOUCHER_CHARS.charAt(Math.floor(Math.random() * VOUCHER_CHARS.length));
   }
   return code;
