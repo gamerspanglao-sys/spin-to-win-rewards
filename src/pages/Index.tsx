@@ -276,24 +276,12 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-y-auto">
       {/* Fixed buttons in corner */}
       <div className="fixed bottom-4 right-4 z-50 flex gap-2">
-        {/* Voucher Redemption Button */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              size="icon"
-              className="relative h-12 w-12 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-2 border-amber-300/50 shadow-lg shadow-amber-500/30 animate-pulse hover:animate-none transition-all hover:scale-110"
-            >
-              <Ticket className="w-6 h-6 text-white" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-ping" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[320px] sm:w-[400px]">
-            <div className="pt-6">
-              <VoucherRedemption />
-            </div>
-          </SheetContent>
-        </Sheet>
+        {/* Settings/PrizeEditor button */}
+        <PrizeEditor
+          prizes={prizes}
+          onPrizesChange={handlePrizesChange}
+          defaultPrizes={DEFAULT_PRIZES}
+        />
 
         {/* Fullscreen button */}
         <Button
@@ -336,11 +324,24 @@ const Index = () => {
                 >
                   {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
                 </Button>
-                <PrizeEditor
-                  prizes={prizes}
-                  onPrizesChange={handlePrizesChange}
-                  defaultPrizes={DEFAULT_PRIZES}
-                />
+                {/* Voucher Redemption Button - in top controls */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button
+                      size="icon"
+                      className="relative h-11 w-11 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-2 border-amber-300/50 shadow-lg shadow-amber-500/30 animate-pulse hover:animate-none transition-all hover:scale-110"
+                    >
+                      <Ticket className="w-5 h-5 text-white" />
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background animate-ping" />
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[320px] sm:w-[400px]">
+                    <div className="pt-6">
+                      <VoucherRedemption />
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </div>
 
               <Button
