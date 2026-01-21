@@ -18,8 +18,8 @@ export const VoucherRedemption = ({ className }: VoucherRedemptionProps) => {
   const handleCheck = () => {
     const trimmedCode = code.trim().toUpperCase().replace(/\s/g, '');
     
-    if (trimmedCode.length !== 6) {
-      setError("Code must be 6 characters");
+    if (trimmedCode.length !== 4) {
+      setError("Code must be 4 characters");
       setCheckedVoucher(null);
       return;
     }
@@ -89,16 +89,16 @@ export const VoucherRedemption = ({ className }: VoucherRedemptionProps) => {
             setError(null);
             setCheckedVoucher(null);
           }}
-          placeholder="Enter 6-digit code..."
+          placeholder="XXXX"
           className="flex-1 h-10 bg-input border-border font-mono tracking-wider uppercase"
-          maxLength={7}
+          maxLength={4}
         />
         <Button
           onClick={handleCheck}
           variant="outline"
           size="sm"
           className="h-10 px-4"
-          disabled={code.trim().length < 6}
+          disabled={code.trim().length < 4}
         >
           Check
         </Button>
