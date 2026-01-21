@@ -272,8 +272,18 @@ const Index = () => {
   }, [playerName, isSpinning]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-auto">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-y-auto">
+      {/* Fullscreen button - fixed in corner */}
+      <Button
+        onClick={toggleFullscreen}
+        variant="outline"
+        size="icon"
+        className="fixed bottom-4 right-4 z-50 border-2 border-primary/30 hover:border-primary transition-all h-11 w-11 bg-background/80 backdrop-blur-sm"
+      >
+        <Maximize2 className="w-5 h-5" />
+      </Button>
+
+      <div className="max-w-6xl mx-auto pb-16">
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-center lg:items-start justify-center">
           {/* Center: Wheel and Controls */}
@@ -302,14 +312,6 @@ const Index = () => {
                   className="border-2 border-primary/30 hover:border-primary transition-all h-11 w-11"
                 >
                   {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                </Button>
-                <Button
-                  onClick={toggleFullscreen}
-                  variant="outline"
-                  size="icon"
-                  className="border-2 border-primary/30 hover:border-primary transition-all h-11 w-11"
-                >
-                  <Maximize2 className="w-5 h-5" />
                 </Button>
                 <PrizeEditor
                   prizes={prizes}
