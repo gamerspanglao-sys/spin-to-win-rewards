@@ -283,9 +283,12 @@ const Index = () => {
           defaultPrizes={DEFAULT_PRIZES}
         />
 
-        {/* Fullscreen button */}
+        {/* Fullscreen button - uses portal to escape fixed container */}
         <Button
-          onClick={toggleFullscreen}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFullscreen();
+          }}
           variant="outline"
           size="icon"
           className="border-2 border-primary/30 hover:border-primary transition-all h-11 w-11 bg-background/80 backdrop-blur-sm"
@@ -315,6 +318,11 @@ const Index = () => {
                   onKeyDown={(e) => e.key === 'Enter' && handleSpin()}
                   className="flex-1 bg-background/50 backdrop-blur-sm border-2 border-primary/30 focus:border-primary text-base h-11"
                   disabled={isSpinning}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  name="player-name-field"
                 />
                 <Button
                   onClick={() => setSoundEnabled(!soundEnabled)}

@@ -92,6 +92,11 @@ export const VoucherRedemption = ({ className }: VoucherRedemptionProps) => {
           placeholder="XXXX"
           className="flex-1 h-10 bg-input border-border font-mono tracking-wider uppercase"
           maxLength={4}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          name="voucher-code-field"
         />
         <Button
           onClick={handleCheck}
