@@ -280,11 +280,12 @@ const Index = () => {
         <Sheet>
           <SheetTrigger asChild>
             <Button
-              variant="outline"
               size="icon"
-              className="border-2 border-primary/30 hover:border-primary transition-all h-11 w-11 bg-background/80 backdrop-blur-sm"
+              className="relative h-12 w-12 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-2 border-amber-300/50 shadow-lg shadow-amber-500/30 animate-pulse hover:animate-none transition-all hover:scale-110"
             >
-              <Ticket className="w-5 h-5" />
+              <Ticket className="w-6 h-6 text-white" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-ping" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-[320px] sm:w-[400px]">
