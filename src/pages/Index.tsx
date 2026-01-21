@@ -340,7 +340,7 @@ const Index = () => {
           </div>
 
           {/* Winners Leaderboard & Voucher Redemption - Right Side on desktop, bottom on mobile */}
-          <div className="w-full lg:w-[280px] flex-shrink-0 animate-fade-in order-2 space-y-4">
+          <div className="w-full lg:w-[280px] flex-shrink-0 animate-fade-in order-3 lg:order-2 space-y-4">
             <WinnersLeaderboard winners={winners} onReset={handleReset} />
             <div className="p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-border">
               <VoucherRedemption />
