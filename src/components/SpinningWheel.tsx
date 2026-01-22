@@ -282,8 +282,8 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       isSpinningRef.current = true;
       winnerIndexRef.current = null; // Clear previous winner highlight
 
-      // Random duration between 10-25 seconds
-      const duration = 10000 + Math.random() * 15000;
+      // Уменьшаем длительность для более быстрого вращения (5-8 секунд)
+      const duration = 5000 + Math.random() * 3000;
       
       // Weighted random winner selection
       const winnerIndex = weightedPickIndex();
@@ -292,8 +292,8 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       const anglePerSector = (2 * Math.PI) / sectors.length;
       const winnerAngle = winnerIndex * anglePerSector + anglePerSector / 2;
       
-      // Always spin forward by adding extra full rotations to current position
-      const extraRotations = Math.PI * 2 * (8 + Math.floor(Math.random() * 5)); // 8-12 full rotations
+      // Уменьшаем количество оборотов для более быстрого вращения (5-7 оборотов)
+      const extraRotations = Math.PI * 2 * (5 + Math.floor(Math.random() * 3));
       const targetAngle = -Math.PI / 2 - winnerAngle; // Where we want to stop
       
       // Normalize target to be ahead of current rotation
@@ -303,6 +303,9 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
       const startRotation = rotationRef.current;
       const startTime = performance.now();
 
+      let lastTickTime = 0;
+      const tickThrottle = 50; // Минимальный интервал между тиками (мс)
+
       const animate = (currentTime: number) => {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -311,17 +314,20 @@ export const SpinningWheel = forwardRef<SpinningWheelRef, SpinningWheelProps>(
         rotationRef.current = startRotation + (targetRotation - startRotation) * easedProgress;
         drawWheel(rotationRef.current);
         
-        // Calculate current sector for tick sound
-        const anglePerSector = (2 * Math.PI) / sectors.length;
-        const normalizedRotation = ((rotationRef.current % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-        const pointerAngle = Math.PI / 2; // Top of wheel
-        const adjustedAngle = (pointerAngle - normalizedRotation + Math.PI * 2) % (Math.PI * 2);
-        const currentSector = Math.floor(adjustedAngle / anglePerSector) % sectors.length;
-        
-        // Play tick when crossing sector boundary
-        if (currentSector !== lastSectorRef.current && progress < 0.95) {
-          lastSectorRef.current = currentSector;
-          onTick?.();
+        // Calculate current sector for tick sound (только если прошло достаточно времени)
+        if (currentTime - lastTickTime > tickThrottle && progress < 0.95) {
+          const anglePerSector = (2 * Math.PI) / sectors.length;
+          const normalizedRotation = ((rotationRef.current % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+          const pointerAngle = Math.PI / 2; // Top of wheel
+          const adjustedAngle = (pointerAngle - normalizedRotation + Math.PI * 2) % (Math.PI * 2);
+          const currentSector = Math.floor(adjustedAngle / anglePerSector) % sectors.length;
+          
+          // Play tick when crossing sector boundary
+          if (currentSector !== lastSectorRef.current) {
+            lastSectorRef.current = currentSector;
+            lastTickTime = currentTime;
+            onTick?.();
+          }
         }
 
         if (progress < 1) {

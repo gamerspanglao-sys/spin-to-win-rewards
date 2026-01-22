@@ -83,18 +83,19 @@ export const WinnerPopup = ({ isOpen, onClose, playerName, prize, prizeColor }: 
         <div 
           className={`relative p-8 rounded-3xl transition-all duration-500 transform ${
             showContent ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
-          }`}
+          } animate-scale-in`}
           style={{
             background: step === 'subscribe' 
-              ? 'linear-gradient(135deg, #1877F222, #1877F244)' 
+              ? 'linear-gradient(135deg, rgba(24, 119, 242, 0.15), rgba(24, 119, 242, 0.25))' 
               : `linear-gradient(135deg, ${prizeColor}22, ${prizeColor}44)`,
-            backdropFilter: 'blur(20px)',
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
             border: step === 'subscribe' 
               ? '3px solid #1877F2' 
               : `3px solid ${prizeColor}`,
             boxShadow: step === 'subscribe'
-              ? '0 0 60px #1877F266, inset 0 0 60px #1877F222'
-              : `0 0 60px ${prizeColor}66, inset 0 0 60px ${prizeColor}22`
+              ? '0 0 80px #1877F288, 0 0 120px #1877F244, inset 0 0 60px #1877F222'
+              : `0 0 80px ${prizeColor}88, 0 0 120px ${prizeColor}44, inset 0 0 60px ${prizeColor}22`
           }}
         >
           {/* Animated glow rings */}

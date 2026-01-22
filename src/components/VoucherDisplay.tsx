@@ -38,10 +38,11 @@ export const VoucherDisplay = ({ voucher, onClose }: VoucherDisplayProps) => {
       
       {/* Voucher Code - Large and prominent */}
       <div 
-        className="py-4 px-6 rounded-2xl mx-auto inline-block"
+        className="py-4 px-6 rounded-2xl mx-auto inline-block animate-scale-in shimmer"
         style={{
           background: `linear-gradient(135deg, ${voucher.prize.color}33, ${voucher.prize.color}55)`,
           border: `3px dashed ${voucher.prize.color}`,
+          boxShadow: `0 0 30px ${voucher.prize.color}66, 0 0 60px ${voucher.prize.color}33`,
         }}
       >
         <div 

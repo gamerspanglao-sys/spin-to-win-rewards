@@ -112,25 +112,273 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     background: radial-gradient(ellipse at top, hsl(220 25% 12%), hsl(220 25% 8%));
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  /* Animated background overlay - более заметный */
+  .animated-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    background: 
+      radial-gradient(circle at 20% 30%, hsla(280, 100%, 65%, 0.25), transparent 40%),
+      radial-gradient(circle at 80% 70%, hsla(340, 100%, 60%, 0.25), transparent 40%),
+      radial-gradient(circle at 50% 50%, hsla(180, 100%, 50%, 0.15), transparent 60%);
+    background-size: 200% 200%, 200% 200%, 300% 300%;
+    animation: backgroundPulse 12s ease-in-out infinite;
+  }
+
+  @keyframes backgroundPulse {
+    0%, 100% { 
+      background-position: 0% 0%, 100% 100%, 50% 50%;
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    50% { 
+      background-position: 100% 100%, 0% 0%, 50% 50%;
+      opacity: 1;
+      transform: scale(1.05);
+    }
   }
 }
 
 @layer utilities {
+  /* Enhanced Neon Glow Effects - более яркие */
   .neon-glow-purple {
-    box-shadow: 0 0 20px hsl(var(--neon-purple) / 0.6), 0 0 40px hsl(var(--neon-purple) / 0.4), 0 0 60px hsl(var(--neon-purple) / 0.2);
+    box-shadow: 
+      0 0 30px hsla(280, 100%, 65%, 0.8), 
+      0 0 60px hsla(280, 100%, 65%, 0.6), 
+      0 0 90px hsla(280, 100%, 65%, 0.4),
+      0 0 120px hsla(280, 100%, 65%, 0.2),
+      inset 0 0 20px hsla(280, 100%, 65%, 0.3);
   }
   
   .neon-glow-pink {
-    box-shadow: 0 0 20px hsl(var(--neon-pink) / 0.6), 0 0 40px hsl(var(--neon-pink) / 0.4), 0 0 60px hsl(var(--neon-pink) / 0.2);
+    box-shadow: 
+      0 0 20px hsla(340, 100%, 60%, 0.6), 
+      0 0 40px hsla(340, 100%, 60%, 0.4), 
+      0 0 60px hsla(340, 100%, 60%, 0.2),
+      0 0 80px hsla(340, 100%, 60%, 0.1);
   }
   
   .neon-glow-cyan {
-    box-shadow: 0 0 20px hsl(var(--neon-cyan) / 0.6), 0 0 40px hsl(var(--neon-cyan) / 0.4), 0 0 60px hsl(var(--neon-cyan) / 0.2);
+    box-shadow: 
+      0 0 20px hsla(180, 100%, 50%, 0.6), 
+      0 0 40px hsla(180, 100%, 50%, 0.4), 
+      0 0 60px hsla(180, 100%, 50%, 0.2),
+      0 0 80px hsla(180, 100%, 50%, 0.1);
+  }
+
+  /* Animated glow */
+  .neon-glow-animated {
+    animation: neonPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes neonPulse {
+    0%, 100% {
+      box-shadow: 
+        0 0 20px hsla(280, 100%, 65%, 0.6), 
+        0 0 40px hsla(280, 100%, 65%, 0.4), 
+        0 0 60px hsla(280, 100%, 65%, 0.2);
+    }
+    50% {
+      box-shadow: 
+        0 0 30px hsla(280, 100%, 65%, 0.8), 
+        0 0 60px hsla(280, 100%, 65%, 0.6), 
+        0 0 90px hsla(280, 100%, 65%, 0.4),
+        0 0 120px hsla(340, 100%, 60%, 0.2);
+    }
   }
 
   .text-neon {
-    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+    text-shadow: 
+      0 0 15px currentColor, 
+      0 0 30px currentColor, 
+      0 0 45px currentColor,
+      0 0 60px currentColor,
+      0 0 80px currentColor;
+    animation: textGlow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes textGlow {
+    from {
+      text-shadow: 
+        0 0 15px currentColor, 
+        0 0 30px currentColor, 
+        0 0 45px currentColor;
+    }
+    to {
+      text-shadow: 
+        0 0 20px currentColor, 
+        0 0 40px currentColor, 
+        0 0 60px currentColor,
+        0 0 80px currentColor,
+        0 0 100px currentColor;
+    }
+  }
+
+  /* Glassmorphism effect - более заметный */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.5);
+  }
+
+  /* Fade in animations */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Slide in from sides */
+  .animate-slide-in-left {
+    animation: slideInLeft 0.5s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.5s ease-out;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Scale animation */
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Ripple effect */
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .ripple:active::after {
+    width: 300px;
+    height: 300px;
+  }
+
+  /* Shimmer effect - более заметный */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      rgba(255, 255, 255, 0.6),
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 3s infinite;
+    z-index: 1;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  /* Pulse glow for buttons */
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* Custom scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--neon-purple) / 0.5);
+    border-radius: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--neon-purple) / 0.7);
   }
 
   .arrow-bounce {
@@ -150,12 +398,19 @@ All colors MUST be HSL.
 
   @keyframes pulseGlow {
     0%, 100% {
-      box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+      box-shadow: 
+        0 0 30px rgba(168, 85, 247, 0.8), 
+        0 0 60px rgba(168, 85, 247, 0.6),
+        0 0 90px rgba(168, 85, 247, 0.4);
       transform: scale(1);
     }
     50% {
-      box-shadow: 0 0 30px rgba(168, 85, 247, 0.8), 0 0 40px rgba(236, 72, 153, 0.5);
-      transform: scale(1.02);
+      box-shadow: 
+        0 0 40px rgba(168, 85, 247, 1), 
+        0 0 80px rgba(168, 85, 247, 0.8),
+        0 0 120px rgba(236, 72, 153, 0.6),
+        0 0 160px rgba(236, 72, 153, 0.4);
+      transform: scale(1.03);
     }
   }
 }

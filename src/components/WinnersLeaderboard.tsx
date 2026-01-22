@@ -24,20 +24,21 @@ export const WinnersLeaderboard = ({ winners, onReset }: WinnersLeaderboardProps
   };
 
   return (
-    <Card className="w-full lg:max-w-[300px] bg-card/80 backdrop-blur-md border-2 border-primary/30 neon-glow-purple p-4">
+    <Card className="w-full glass-strong border-2 border-primary/30 neon-glow-purple p-4 md:p-6 animate-slide-in-right">
       <div className="flex items-center gap-2 mb-4">
         <Trophy className="w-5 h-5 md:w-6 md:h-6 text-neon-yellow" />
         <h2 className="text-lg md:text-xl font-bold text-neon-cyan text-neon">Last 10 Winners</h2>
       </div>
 
-      <div className="space-y-2 mb-4 max-h-[300px] md:max-h-[500px] overflow-y-auto">
+      <div className="space-y-2 mb-4 max-h-[400px] md:max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
         {winners.length === 0 ? (
           <p className="text-muted-foreground text-center py-4 text-sm md:text-base">No winners yet!</p>
         ) : (
           winners.map((winner, index) => (
             <div
               key={winner.timestamp}
-              className="bg-muted/50 rounded-lg p-2.5 md:p-3 border border-border/50 hover:border-primary/50 transition-all hover:scale-[1.02]"
+              className="glass rounded-lg p-2.5 md:p-3 border border-primary/30 hover:border-primary/80 transition-all hover:scale-[1.05] hover:shadow-xl hover:shadow-primary/40 animate-fade-in hover:bg-primary/10"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="flex items-start gap-2">
                 <span className="text-neon-purple font-bold text-base md:text-lg">{index + 1}.</span>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,10 +9,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Settings, Plus, Trash2, RotateCcw } from "lucide-react";
+import { Settings, Plus, Trash2, RotateCcw, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { VoucherRedemption } from "./VoucherRedemption";
 import { Separator } from "@/components/ui/separator";
+import { 
+  getLoyverseToken, 
+  setLoyverseToken, 
+  testLoyverseConnection,
+  clearCustomerCache 
+} from "@/lib/loyverse";
 
 export interface Prize {
   label: string;
@@ -36,10 +42,14 @@ const PRESET_COLORS = [
 export const PrizeEditor = ({ prizes, onPrizesChange, defaultPrizes }: PrizeEditorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingPrizes, setEditingPrizes] = useState<Prize[]>(prizes);
+  const [loyverseToken, setLoyverseTokenState] = useState<string | null>(getLoyverseToken());
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
 
   const handleOpen = (open: boolean) => {
     if (open) {
       setEditingPrizes([...prizes]);
+      // Загружаем токен при открытии
+      setLoyverseTokenState(getLoyverseToken());
     }
     setIsOpen(open);
   };
@@ -226,6 +236,80 @@ export const PrizeEditor = ({ prizes, onPrizesChange, defaultPrizes }: PrizeEdit
           >
             Save Changes
           </Button>
+
+          {/* Separator */}
+          <Separator className="my-4" />
+
+          {/* Loyverse API Settings - переместил выше */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              <h3 className="font-bold text-lg">Loyverse API Settings</h3>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <Label>API Token</Label>
+                <Input
+                  type="password"
+                  placeholder="Enter Loyverse API token"
+                  value={loyverseToken || ''}
+                  onChange={(e) => {
+                    const token = e.target.value;
+                    setLoyverseTokenState(token);
+                    if (token) {
+                      setLoyverseToken(token);
+                    }
+                  }}
+                  className="h-9"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Get your token from: Loyverse Dashboard → Settings → API
+                </p>
+                <div className="mt-2 p-2 rounded bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xs text-amber-500">
+                    ⚠️ Note: Loyverse API may block browser requests (CORS). If "Failed to fetch" appears, you may need a proxy server or use this from a server environment.
+                  </p>
+                </div>
+              </div>
+              
+              <Button
+                onClick={async () => {
+                  if (!loyverseToken) {
+                    toast.error("Please enter API token first");
+                    return;
+                  }
+                  setIsTestingConnection(true);
+                  try {
+                    const result = await testLoyverseConnection();
+                    if (result.success) {
+                      toast.success(result.message);
+                    } else {
+                      toast.error(result.message);
+                    }
+                  } finally {
+                    setIsTestingConnection(false);
+                  }
+                }}
+                variant="outline"
+                className="w-full"
+                disabled={!loyverseToken || isTestingConnection}
+              >
+                {isTestingConnection ? "Testing..." : "Test Connection"}
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  clearCustomerCache();
+                  toast.success("Cache cleared!");
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                Clear Cache
+              </Button>
+            </div>
+          </div>
 
           {/* Separator */}
           <Separator className="my-4" />

@@ -7,11 +7,16 @@ import { VoucherRedemption } from "@/components/VoucherRedemption";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Maximize2, Volume2, VolumeX, Ticket } from "lucide-react";
+import { Maximize2, Volume2, VolumeX, Ticket, Wallet, CheckCircle2, XCircle, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { cleanExpiredVouchers } from "@/lib/vouchers";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { 
+  canCustomerSpinByReceipt as checkLoyverseBalance,
+  getLoyverseToken,
+  type LoyverseCustomer 
+} from "@/lib/loyverse";
 
 // Default prize configuration
 const DEFAULT_PRIZES: Prize[] = [
@@ -98,7 +103,7 @@ const loadPrizes = (): Prize[] => {
 };
 
 const Index = () => {
-  const [playerName, setPlayerName] = useState("");
+  const [receiptNumber, setReceiptNumber] = useState("");
   const [isSpinning, setIsSpinning] = useState(false);
   const [winners, setWinners] = useState<Winner[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -107,11 +112,46 @@ const Index = () => {
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
   const [lastWin, setLastWin] = useState<{ name: string; prize: string; color: string } | null>(null);
   const [prizes, setPrizes] = useState<Prize[]>(loadPrizes);
+  const [customerBalance, setCustomerBalance] = useState<number | null>(null);
+  const [customerData, setCustomerData] = useState<LoyverseCustomer | null>(null);
+  const [isCheckingBalance, setIsCheckingBalance] = useState(false);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
   const wheelRef = useRef<SpinningWheelRef>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Use the game sounds hook
   const { startSpinSound, stopSpinSound, playWinSound, playTickSound } = useGameSounds();
+
+  // Активируем аудио контекст при первом взаимодействии
+  useEffect(() => {
+    const activateAudio = async () => {
+      try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+        ctx.close();
+      } catch (e) {
+        // Игнорируем ошибки
+      }
+    };
+
+    // Активируем при первом клике на странице
+    const handleFirstClick = () => {
+      activateAudio();
+      document.removeEventListener('click', handleFirstClick);
+      document.removeEventListener('touchstart', handleFirstClick);
+    };
+
+    document.addEventListener('click', handleFirstClick, { once: true });
+    document.addEventListener('touchstart', handleFirstClick, { once: true });
+
+    return () => {
+      document.removeEventListener('click', handleFirstClick);
+      document.removeEventListener('touchstart', handleFirstClick);
+    };
+  }, []);
 
   // Generate sectors from current prizes
   const sectors = useMemo(() => generateSectors(prizes), [prizes]);
@@ -167,14 +207,80 @@ const Index = () => {
     }
   }, [cooldownTime]);
 
+  // Проверка баланса через Loyverse по номеру чека
+  const handleCheckBalance = async () => {
+    const receipt = receiptNumber.trim();
+    if (!receipt) {
+      toast.error("Please enter receipt number first!");
+      return;
+    }
+
+    const token = getLoyverseToken();
+    if (!token) {
+      toast.error("Loyverse API token not configured. Please configure it in settings.");
+      return;
+    }
+
+    setIsCheckingBalance(true);
+    setBalanceError(null);
+    
+    try {
+      const result = await checkLoyverseBalance(receipt);
+      
+      if (result.allowed) {
+        setCustomerBalance(result.balance || 0);
+        setCustomerData(result.customer || null);
+        toast.success(`Balance verified: ₱${result.balance?.toFixed(2)}`);
+      } else {
+        setBalanceError(result.reason || "Cannot verify balance");
+        setCustomerBalance(result.balance || 0);
+        setCustomerData(result.customer || null);
+        toast.error(result.reason || "Insufficient balance");
+      }
+    } catch (error: any) {
+      const errorMsg = error.message || "Failed to check balance";
+      setBalanceError(errorMsg);
+      
+      // Показываем более понятное сообщение
+      if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
+        toast.error("CORS Error: API blocks browser. Token may be valid - check console.");
+        console.error("Loyverse API Error:", error);
+        console.log("If token is correct, this is a CORS issue. Token validation:", token ? "Token exists" : "No token");
+      } else if (errorMsg.includes('Invalid token') || errorMsg.includes('401')) {
+        toast.error("Invalid API token. Please check token in Settings.");
+      } else {
+        toast.error(errorMsg);
+      }
+    } finally {
+      setIsCheckingBalance(false);
+    }
+  };
+
+  // Сброс данных баланса при смене номера чека
+  useEffect(() => {
+    setCustomerBalance(null);
+    setCustomerData(null);
+    setBalanceError(null);
+  }, [receiptNumber]);
+
   const handleSpin = () => {
-    const name = playerName.trim();
-    if (!name) {
-      toast.error("Please enter your name!");
+    const receipt = receiptNumber.trim();
+    if (!receipt) {
+      toast.error("Please enter receipt number!");
       return;
     }
 
     if (isSpinning) return;
+    
+    // Проверка баланса через Loyverse
+    const token = getLoyverseToken();
+    if (token) {
+      if (!customerData || !customerBalance || customerBalance < 700) {
+        toast.error("Please verify your balance first!");
+        handleCheckBalance();
+        return;
+      }
+    }
     
     if (cooldownTime > 0) {
       toast.error(`Please wait ${cooldownTime} seconds before spinning again!`);
@@ -232,7 +338,7 @@ const Index = () => {
       });
 
       const newWinner: Winner = {
-        name: playerName,
+        name: customerData?.name || receiptNumber,
         prize,
         timestamp: Date.now(),
       };
@@ -242,7 +348,7 @@ const Index = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWinners));
 
       // Show winner popup
-      setLastWin({ name: playerName, prize, color: sectorColor });
+      setLastWin({ name: customerData?.name || receiptNumber, prize, color: sectorColor });
       setShowWinnerPopup(true);
 
       setIsSpinning(false);
@@ -289,13 +395,16 @@ const Index = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [playerName, isSpinning]);
+  }, [receiptNumber, isSpinning]);
 
   return (
     <div 
       ref={containerRef}
-      className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 p-4 md:p-6 overflow-y-auto"
+      className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 relative z-10"
     >
+      {/* Animated background overlay */}
+      <div className="animated-bg" />
+      
       {/* Fixed buttons in corner */}
       <div className="fixed bottom-4 right-4 z-50 flex gap-2">
         {/* Settings/PrizeEditor button */}
@@ -319,32 +428,32 @@ const Index = () => {
         </Button>
       </div>
 
-      <div className="max-w-6xl mx-auto pb-16">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 pb-24">
         {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-center lg:items-start justify-center">
+        <div className="flex flex-col lg:flex-row gap-6 md:gap-8 items-start justify-center">
           {/* Center: Wheel and Controls */}
-          <div className="flex-1 flex flex-col items-center gap-4 w-full order-1">
+          <div className="flex-1 flex flex-col items-center gap-6 w-full max-w-2xl mx-auto lg:mx-0 order-1">
             {/* Controls */}
-            <div className="w-full max-w-md space-y-3">
+            <div className="w-full max-w-md space-y-4">
               {/* Header - aligned with controls */}
-              <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider text-center animate-fade-in">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan text-neon tracking-wider text-center animate-fade-in">
                 GAMERS
               </h1>
               
               <div className="flex gap-2">
                 <Input
                   type="text"
-                  placeholder="Enter your name..."
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
+                  placeholder="Enter receipt number..."
+                  value={receiptNumber}
+                  onChange={(e) => setReceiptNumber(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSpin()}
-                  className="flex-1 bg-background/50 backdrop-blur-sm border-2 border-primary/30 focus:border-primary text-base h-11"
+                  className="flex-1 glass border-2 border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/50 text-base h-11 transition-all hover:border-primary/70 hover:shadow-lg hover:shadow-primary/30"
                   disabled={isSpinning}
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck={false}
-                  name="player-name-field"
+                  name="receipt-number-field"
                 />
                 <Button
                   onClick={() => setSoundEnabled(!soundEnabled)}
@@ -374,18 +483,95 @@ const Index = () => {
                 </Sheet>
               </div>
 
+              {/* Balance Check Section - только если токен настроен */}
+              {getLoyverseToken() && (
+                <div className="space-y-2">
+                  {customerData && customerBalance !== null ? (
+                  <div className={`p-3 rounded-lg border ${
+                    customerBalance >= 700 
+                      ? 'bg-green-500/10 border-green-500/30' 
+                      : 'bg-red-500/10 border-red-500/30'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {customerBalance >= 700 ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-red-500" />
+                        )}
+                        <div>
+                          <div className="text-sm font-semibold">
+                            {customerData.name}
+                          </div>
+                          <div className={`text-xs ${customerBalance >= 700 ? 'text-green-500' : 'text-red-500'}`}>
+                            Balance: ₱{customerBalance.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setCustomerData(null);
+                          setCustomerBalance(null);
+                          setBalanceError(null);
+                        }}
+                      >
+                        Change
+                      </Button>
+                    </div>
+                    {customerBalance < 700 && (
+                      <div className="mt-2 text-xs text-red-500">
+                        Minimum balance required: ₱700.00
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Button
+                    onClick={handleCheckBalance}
+                    variant="outline"
+                    className="w-full glass border-2 border-primary/40"
+                    disabled={!receiptNumber.trim() || isCheckingBalance}
+                  >
+                    {isCheckingBalance ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <Wallet className="w-4 h-4 mr-2" />
+                        Check Balance (Loyverse)
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                  {/* Error Message */}
+                  {balanceError && (
+                    <div className="flex items-center gap-2 text-sm text-red-500 p-2 rounded bg-red-500/10">
+                      <XCircle className="w-4 h-4" />
+                      <span>{balanceError}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <Button
                 onClick={handleSpin}
-                disabled={isSpinning || cooldownTime > 0}
-                className={`w-full h-12 text-lg font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-105 transition-all neon-glow-purple ${!isSpinning && cooldownTime === 0 && 'animate-pulse-glow'}`}
+                disabled={isSpinning || cooldownTime > 0 || (getLoyverseToken() && (!customerData || !customerBalance || customerBalance < 700))}
+                className={`w-full h-12 text-lg font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan hover:scale-110 hover:shadow-2xl transition-all duration-300 neon-glow-purple ripple shimmer ${!isSpinning && cooldownTime === 0 && 'animate-pulse-glow'}`}
                 size="lg"
+                style={{
+                  textShadow: '0 0 20px rgba(255,255,255,0.8)',
+                }}
               >
                 {isSpinning ? "SPINNING..." : cooldownTime > 0 ? `WAIT ${cooldownTime}s` : "🎯 SPIN THE WHEEL"}
               </Button>
             </div>
 
             {/* Spinning Wheel */}
-            <div className={`w-full aspect-square ${isFullscreen ? 'max-w-[75vh]' : 'max-w-[500px]'}`}>
+            <div className={`w-full aspect-square ${isFullscreen ? 'max-w-[75vh]' : 'max-w-[500px] md:max-w-[600px]'} mb-4`}>
               <SpinningWheel
                 ref={wheelRef}
                 sectors={sectors}
@@ -396,9 +582,9 @@ const Index = () => {
           </div>
 
           {/* Winners Leaderboard & Voucher Redemption - Right Side on desktop, bottom on mobile */}
-          <div className="w-full lg:w-[280px] flex-shrink-0 animate-fade-in order-3 lg:order-2 space-y-4">
+          <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 animate-fade-in order-3 lg:order-2 space-y-6">
             <WinnersLeaderboard winners={winners} onReset={handleReset} />
-            <div className="p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-border">
+            <div className="p-4 md:p-6 rounded-xl glass-strong border border-primary/20 animate-scale-in">
               <VoucherRedemption />
             </div>
           </div>
